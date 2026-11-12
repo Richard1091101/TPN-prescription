@@ -1,0 +1,1440 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>臨床 TPN 處方調整與分析系統 (HTML 獨立執行版)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+        ::-webkit-scrollbar { height: 6px; width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .sticky-col { position: sticky; left: 0; z-index: 10; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen pb-24 lg:pb-12 antialiased">
+
+    <!-- Top Sticky Header -->
+    <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 px-3 sm:px-6 py-2.5 shadow-sm">
+        <div class="max-w-7xl mx-auto flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-teal-600 flex items-center justify-center text-white font-bold text-sm shadow">
+                    TPN
+                </div>
+                <div>
+                    <h1 class="text-sm sm:text-base font-bold text-slate-900 leading-tight">
+                        臨床 TPN 處方調整與分析系統
+                    </h1>
+                    <p class="text-[10px] text-slate-500 hidden sm:block">
+                        HTML 單一檔案獨立執行版 (含 2018.10.08 調劑物理相容性、沉澱破乳檢查與 CSV 試算表更新)
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-1.5 sm:gap-2">
+                <button type="button" onclick="openDbModal()" class="px-2.5 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-300 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-xs">
+                    <span>📁 藥庫 CSV 匯入/匯出</span>
+                </button>
+                <button type="button" onclick="window.print()" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold transition hidden sm:inline">
+                    <span>🖨️ 列印</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-3 sm:px-6 py-4 space-y-4">
+
+        <!-- 階段一：病患生理與目標評估 -->
+        <section id="sec_patient" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5">
+            <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+                <div class="flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-md bg-teal-600 text-white flex items-center justify-center font-bold text-xs">1</span>
+                    <h2 class="text-base font-bold text-slate-900">病患基礎需求評估 (Patient Baseline & Targets)</h2>
+                </div>
+                <button type="button" onclick="toggleTargetAdjust()" class="text-xs font-bold text-teal-700 bg-teal-50 px-2.5 py-1 rounded-lg border border-teal-200 hover:bg-teal-100">
+                    🎯 <span id="btn_target_toggle_text">展開目標微調</span>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 mb-1">性別</label>
+                    <select id="p_gender" class="w-full min-h-[42px] border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs sm:text-sm font-medium bg-slate-50" onchange="calcPatientNeeds()">
+                        <option value="male">男性 (Male)</option>
+                        <option value="female">女性 (Female)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 mb-1">年齡 (歲)</label>
+                    <input type="number" id="p_age" value="65" min="1" max="120" class="w-full min-h-[42px] border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs sm:text-sm font-bold text-slate-800 bg-slate-50 text-center" oninput="calcPatientNeeds()">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 mb-1">身高 (cm)</label>
+                    <input type="number" id="p_height" value="168" min="50" max="250" class="w-full min-h-[42px] border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs sm:text-sm font-bold text-slate-800 bg-slate-50 text-center" oninput="calcPatientNeeds()">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 mb-1">體重 (kg)</label>
+                    <input type="number" id="p_weight" value="65" min="10" max="300" step="0.5" class="w-full min-h-[42px] border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs sm:text-sm font-bold text-slate-800 bg-slate-50 text-center" oninput="calcPatientNeeds()">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 mb-1">活動因子 (AF)</label>
+                    <select id="p_af" class="w-full min-h-[42px] border border-slate-300 rounded-lg px-2 py-1.5 text-xs sm:text-sm font-medium bg-slate-50 truncate" onchange="calcPatientNeeds()">
+                        <option value="1.0">臥床/呼吸器 (1.0)</option>
+                        <option value="1.1">輪椅/輕度床邊 (1.1)</option>
+                        <option value="1.2">輕度走動 (1.2)</option>
+                        <option value="1.3">中度活動 (1.3)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 mb-1">壓力因子 (SF)</label>
+                    <select id="p_sf" class="w-full min-h-[42px] border border-slate-300 rounded-lg px-2 py-1.5 text-xs sm:text-sm font-medium bg-slate-50 truncate" onchange="calcPatientNeeds()">
+                        <option value="1.0">無壓力/營養不良 (1.0)</option>
+                        <option value="1.1">輕微手術/發燒 (1.1)</option>
+                        <option value="1.2" selected>一般大手術/骨折 (1.2)</option>
+                        <option value="1.3">嚴重創傷 (1.3)</option>
+                        <option value="1.4">敗血症 (1.4)</option>
+                        <option value="1.5">重症感染 (1.5)</option>
+                        <option value="1.7">大燒傷 &lt;20% (1.7)</option>
+                        <option value="2.0">重度燒傷 &gt;20% (2.0)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Derived Metrics Strip -->
+            <div class="mt-3 p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-xs flex flex-wrap items-center justify-between gap-2">
+                <div class="flex flex-wrap items-center gap-3">
+                    <span>BMI: <strong id="m_bmi" class="text-slate-900">--</strong> (<span id="m_bmi_label" class="text-emerald-700 font-bold">正常</span>)</span>
+                    <span>理想體重 IBW: <strong id="m_ibw" class="text-slate-900">--</strong> kg</span>
+                    <span id="m_adj_block" class="hidden text-teal-800">校正體重 AdjBW: <strong id="m_adjbw">--</strong> kg (
+                        <label class="cursor-pointer font-bold"><input type="checkbox" id="p_use_adj" onchange="calcPatientNeeds()"> 依校正體重試算</label>
+                    )</span>
+                    <span>基礎熱量 BMR: <strong id="m_bmr" class="text-slate-900">--</strong> kcal</span>
+                    <span>總消耗 TEE: <strong id="m_tee" class="text-teal-800 font-black">--</strong> kcal</span>
+                </div>
+            </div>
+
+            <!-- Target Fine-Tuning Block -->
+            <div id="target_adjust_block" class="mt-3 p-3 bg-teal-50/60 border border-teal-200 rounded-xl hidden space-y-2">
+                <div class="flex items-center justify-between text-xs font-bold text-teal-900">
+                    <span>🎯 目標需求微調 (連動差距分析)：</span>
+                    <button type="button" onclick="resetTargetsToDefault()" class="text-[11px] text-teal-700 hover:underline">還原指引預設值</button>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-10 gap-2 text-center text-xs">
+                    <div><label class="block text-[10px] text-slate-500">熱量 kcal</label><input type="number" id="tar_kcal" class="w-full border rounded p-1 font-bold text-teal-800 text-center" oninput="applyCustomTargetChange()"></div>
+                    <div><label class="block text-[10px] text-slate-500">蛋白 g</label><input type="number" step="0.1" id="tar_protein" class="w-full border rounded p-1 font-bold text-teal-800 text-center" oninput="applyCustomTargetChange()"></div>
+                    <div><label class="block text-[10px] text-slate-500">脂肪 g</label><input type="number" step="0.1" id="tar_lipid" class="w-full border rounded p-1 font-bold text-teal-800 text-center" oninput="applyCustomTargetChange()"></div>
+                    <div><label class="block text-[10px] text-slate-500">醣類 g</label><input type="number" step="0.1" id="tar_cho" class="w-full border rounded p-1 font-bold text-teal-800 text-center" oninput="applyCustomTargetChange()"></div>
+                    <div><label class="block text-[10px] text-slate-500">鈉 Na mEq</label><input type="number" step="1" id="tar_na" class="w-full border rounded p-1 font-bold text-teal-800 text-center" oninput="applyCustomTargetChange()"></div>
+                    <div><label class="block text-[10px] text-slate-500">鉀 K mEq</label><input type="number" step="1" id="tar_k" class="w-full border rounded p-1 font-bold text-teal-800 text-center" oninput="applyCustomTargetChange()"></div>
+                    <div><label class="block text-[10px] text-slate-500">磷 P mmol</label><input type="number" step="0.5" id="tar_p" class="w-full border rounded p-1 font-bold text-teal-800 text-center" oninput="applyCustomTargetChange()"></div>
+                    <div><label class="block text-[10px] text-slate-500">鈣 Ca mEq</label><input type="number" step="0.5" id="tar_ca" class="w-full border rounded p-1 font-bold text-teal-800 text-center" oninput="applyCustomTargetChange()"></div>
+                    <div><label class="block text-[10px] text-slate-500">鎂 Mg mEq</label><input type="number" step="0.5" id="tar_mg" class="w-full border rounded p-1 font-bold text-teal-800 text-center" oninput="applyCustomTargetChange()"></div>
+                    <div><label class="block text-[10px] text-slate-500">鋅 Zn mg</label><input type="number" step="0.5" id="tar_zn" class="w-full border rounded p-1 font-bold text-teal-800 text-center" oninput="applyCustomTargetChange()"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 階段二：配方微調 (目前處方 vs 新處方調整) -->
+        <section id="sec_formula" class="space-y-3">
+            <!-- Mobile Segment Switcher (lg:hidden) -->
+            <div class="lg:hidden flex items-center justify-between bg-white p-2 rounded-xl border border-slate-200 shadow-xs">
+                <span class="text-xs font-bold text-slate-600 pl-1">切換視角：</span>
+                <div class="grid grid-cols-3 gap-1 flex-1 max-w-xs">
+                    <button type="button" onclick="setMobileView('new')" id="btn_mv_new" class="py-1.5 px-2 text-xs font-bold rounded-lg bg-teal-600 text-white">新處方(調整)</button>
+                    <button type="button" onclick="setMobileView('curr')" id="btn_mv_curr" class="py-1.5 px-2 text-xs font-bold rounded-lg bg-slate-100 text-slate-700">目前處方</button>
+                    <button type="button" onclick="setMobileView('both')" id="btn_mv_both" class="py-1.5 px-2 text-xs font-bold rounded-lg bg-slate-100 text-slate-700">並排展示</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <!-- 左欄：目前處方 -->
+                <div id="col_curr" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 space-y-3">
+                    <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+                        <div class="flex items-center gap-2">
+                            <span class="w-5 h-5 rounded bg-slate-600 text-white flex items-center justify-center font-bold text-xs">2</span>
+                            <h3 class="text-base font-bold text-slate-800">目前配方 (Current)</h3>
+                        </div>
+                        <span class="text-xs font-bold text-slate-500">總液體量: <strong id="curr_vol_total" class="text-slate-900">--</strong> ml/d</span>
+                    </div>
+
+                    <!-- Main Selection -->
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                        <label class="block text-xs font-bold text-slate-700">主配方選擇</label>
+                        <select id="curr_main_sel" class="w-full min-h-[42px] border border-slate-300 rounded-lg p-2 text-xs sm:text-sm font-semibold bg-white" onchange="onMainSelect('curr')"></select>
+                        <div class="flex items-center gap-2 pt-1">
+                            <div class="flex-1">
+                                <label class="block text-[10px] text-slate-500">流速 (ml/hr)</label>
+                                <input type="number" id="curr_main_rate" step="0.5" class="w-full min-h-[38px] border border-slate-300 rounded-lg px-2 text-xs font-bold text-center" oninput="onRateInput('curr')">
+                            </div>
+                            <span class="pt-4 text-slate-400">➔</span>
+                            <div class="flex-1">
+                                <label class="block text-[10px] text-slate-500">每日總量 (ml/d)</label>
+                                <input type="number" id="curr_main_vol" class="w-full min-h-[38px] border border-slate-300 rounded-lg px-2 text-xs font-bold text-slate-800 text-center" oninput="onVolInput('curr')">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 20% Lipid -->
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                        <label class="block text-xs font-bold text-slate-700">外加 20% 脂肪乳劑</label>
+                        <div class="flex items-center gap-2">
+                            <select id="curr_lipid_sel" class="flex-1 min-h-[40px] border border-slate-300 rounded-lg p-1.5 text-xs bg-white" onchange="onLipidSelect('curr')"></select>
+                            <input type="number" id="curr_lipid_vials" step="0.5" min="0" placeholder="瓶數" class="w-16 min-h-[40px] border border-slate-300 rounded-lg text-center text-xs font-bold" oninput="updateAllCalculations()">
+                            <span id="curr_lipid_vol_text" class="text-xs text-slate-500 font-mono w-16 text-right">0 ml</span>
+                        </div>
+                    </div>
+
+                    <!-- Trace Elements -->
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                        <label class="block text-xs font-bold text-slate-700">微量元素補充</label>
+                        <div class="flex items-center gap-2">
+                            <select id="curr_trace_sel" class="flex-1 min-h-[40px] border border-slate-300 rounded-lg p-1.5 text-xs bg-white" onchange="updateAllCalculations()"></select>
+                            <input type="number" id="curr_trace_vials" step="0.5" min="0" placeholder="支數" class="w-16 min-h-[40px] border border-slate-300 rounded-lg text-center text-xs font-bold" oninput="updateAllCalculations()">
+                        </div>
+                    </div>
+
+                    <!-- Additives Container -->
+                    <div class="p-3 bg-amber-50/50 rounded-xl border border-amber-200 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-800">電解質與單方添加劑</span>
+                            <button type="button" onclick="addAdditiveRow('curr')" class="text-xs font-bold text-amber-900 bg-amber-200 px-2 py-1 rounded hover:bg-amber-300">+ 新增單方</button>
+                        </div>
+                        <div id="curr_additives_list" class="space-y-1.5"></div>
+                    </div>
+                </div>
+
+                <!-- 右欄：新處方調整 (Proposed) -->
+                <div id="col_new" class="bg-white rounded-2xl border border-teal-200 ring-1 ring-teal-100 shadow-sm p-4 space-y-3">
+                    <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+                        <div class="flex items-center gap-2">
+                            <span class="w-5 h-5 rounded bg-teal-600 text-white flex items-center justify-center font-bold text-xs">3</span>
+                            <h3 class="text-base font-bold text-teal-950">建議新處方 (Proposed)</h3>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="copyCurrToNew()" class="text-xs font-bold text-teal-800 bg-teal-50 border border-teal-300 px-2.5 py-1 rounded-lg hover:bg-teal-100 transition">
+                                複製舊處方 ➔
+                            </button>
+                            <span class="text-xs font-bold text-teal-900">總液體量: <strong id="new_vol_total" class="text-teal-950">--</strong> ml/d</span>
+                        </div>
+                    </div>
+
+                    <!-- Main Selection -->
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                        <label class="block text-xs font-bold text-slate-700">新主配方選擇</label>
+                        <select id="new_main_sel" class="w-full min-h-[42px] border border-slate-300 rounded-lg p-2 text-xs sm:text-sm font-semibold bg-white" onchange="onMainSelect('new')"></select>
+                        
+                        <!-- Iso-Carbohydrate recommendation banner -->
+                        <div id="iso_cho_banner" class="p-2 bg-teal-50 border border-teal-200 rounded-lg text-xs flex items-center justify-between text-teal-900 hidden">
+                            <span>💡 建議等碳水起始流速：<strong id="iso_rate_val" class="font-mono text-sm underline">--</strong> ml/hr</span>
+                            <button type="button" onclick="applyIsoRate()" class="px-2 py-1 bg-teal-600 text-white font-bold rounded text-xs hover:bg-teal-700">套用</button>
+                        </div>
+
+                        <div class="flex items-center gap-2 pt-1">
+                            <div>
+                                <label class="block text-[10px] text-slate-500">流速 (ml/hr)</label>
+                                <div class="flex items-center gap-1">
+                                    <button type="button" onclick="adjustNewRate(-5)" class="w-7 h-7 bg-slate-200 hover:bg-slate-300 rounded font-bold text-xs">-5</button>
+                                    <input type="number" id="new_main_rate" step="0.5" class="w-18 min-h-[38px] border border-slate-300 rounded-lg px-2 text-xs font-bold text-center" oninput="onRateInput('new')">
+                                    <button type="button" onclick="adjustNewRate(5)" class="w-7 h-7 bg-slate-200 hover:bg-slate-300 rounded font-bold text-xs">+5</button>
+                                </div>
+                            </div>
+                            <span class="pt-4 text-slate-400">➔</span>
+                            <div class="flex-1">
+                                <label class="block text-[10px] text-slate-500">每日總量 (ml/d)</label>
+                                <input type="number" id="new_main_vol" class="w-full min-h-[38px] border border-slate-300 rounded-lg px-2 text-xs font-bold text-teal-800 text-center" oninput="onVolInput('new')">
+                            </div>
+                        </div>
+
+                        <!-- Custom nutrient fine tuning toggle -->
+                        <div class="pt-1">
+                            <label class="flex items-center gap-1.5 text-xs font-bold text-slate-700 cursor-pointer">
+                                <input type="checkbox" id="new_custom_toggle" onchange="toggleNewCustomMain()">
+                                <span>手動微調主配方濃度 (每 1000ml)</span>
+                            </label>
+                            <div id="new_custom_grid" class="mt-2 p-2 bg-white rounded-lg border border-teal-200 grid grid-cols-4 gap-1 text-[11px] hidden text-center">
+                                <div><label class="block text-[9px] text-slate-400">蛋白 g</label><input type="number" id="new_c_protein" step="0.5" class="w-full border rounded p-1 text-center font-bold" oninput="updateAllCalculations()"></div>
+                                <div><label class="block text-[9px] text-slate-400">醣類 g</label><input type="number" id="new_c_cho" step="1" class="w-full border rounded p-1 text-center font-bold" oninput="updateAllCalculations()"></div>
+                                <div><label class="block text-[9px] text-slate-400">脂肪 g</label><input type="number" id="new_c_lipid" step="0.5" class="w-full border rounded p-1 text-center font-bold" oninput="updateAllCalculations()"></div>
+                                <div><label class="block text-[9px] text-slate-400">鈉 Na</label><input type="number" id="new_c_na" step="1" class="w-full border rounded p-1 text-center font-bold" oninput="updateAllCalculations()"></div>
+                                <div><label class="block text-[9px] text-slate-400">鉀 K</label><input type="number" id="new_c_k" step="1" class="w-full border rounded p-1 text-center font-bold" oninput="updateAllCalculations()"></div>
+                                <div><label class="block text-[9px] text-slate-400">磷 P</label><input type="number" id="new_c_p" step="0.5" class="w-full border rounded p-1 text-center font-bold" oninput="updateAllCalculations()"></div>
+                                <div><label class="block text-[9px] text-slate-400">鈣 Ca</label><input type="number" id="new_c_ca" step="0.5" class="w-full border rounded p-1 text-center font-bold" oninput="updateAllCalculations()"></div>
+                                <div><label class="block text-[9px] text-slate-400">鎂 Mg</label><input type="number" id="new_c_mg" step="0.5" class="w-full border rounded p-1 text-center font-bold" oninput="updateAllCalculations()"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 20% Lipid -->
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                        <label class="block text-xs font-bold text-slate-700">外加 20% 脂肪乳劑</label>
+                        <div class="flex items-center gap-2">
+                            <select id="new_lipid_sel" class="flex-1 min-h-[40px] border border-slate-300 rounded-lg p-1.5 text-xs bg-white" onchange="onLipidSelect('new')"></select>
+                            <input type="number" id="new_lipid_vials" step="0.5" min="0" placeholder="瓶數" class="w-16 min-h-[40px] border border-slate-300 rounded-lg text-center text-xs font-bold" oninput="updateAllCalculations()">
+                            <span id="new_lipid_vol_text" class="text-xs text-slate-500 font-mono w-16 text-right">0 ml</span>
+                        </div>
+                    </div>
+
+                    <!-- Trace Elements -->
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                        <label class="block text-xs font-bold text-slate-700">微量元素補充</label>
+                        <div class="flex items-center gap-2">
+                            <select id="new_trace_sel" class="flex-1 min-h-[40px] border border-slate-300 rounded-lg p-1.5 text-xs bg-white" onchange="updateAllCalculations()"></select>
+                            <input type="number" id="new_trace_vials" step="0.5" min="0" placeholder="支數" class="w-16 min-h-[40px] border border-slate-300 rounded-lg text-center text-xs font-bold" oninput="updateAllCalculations()">
+                        </div>
+                    </div>
+
+                    <!-- Additives Container -->
+                    <div class="p-3 bg-amber-50/50 rounded-xl border border-amber-200 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-800">電解質與單方添加劑</span>
+                            <button type="button" onclick="addAdditiveRow('new')" class="text-xs font-bold text-amber-900 bg-amber-200 px-2 py-1 rounded hover:bg-amber-300">+ 新增單方</button>
+                        </div>
+                        <div id="new_additives_list" class="space-y-1.5"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 階段三：三維差距分析總表 (Gap Analysis) -->
+        <section id="sec_analysis" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 space-y-3">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+                <div class="flex items-center gap-2">
+                    <span class="w-6 h-6 rounded bg-teal-600 text-white flex items-center justify-center font-bold text-xs">4</span>
+                    <h2 class="text-base font-bold text-slate-900">目前 vs 建議處方 差距分析總表</h2>
+                </div>
+                <span class="text-xs text-slate-500 font-mono">ASPEN / ESPEN 指引校驗</span>
+            </div>
+
+            <div class="overflow-x-auto rounded-xl border border-slate-200">
+                <table class="w-full text-left text-xs min-w-[700px]">
+                    <thead class="bg-slate-900 text-white text-[11px]">
+                        <tr>
+                            <th class="py-2.5 px-3 sticky-col bg-slate-900">營養素項目</th>
+                            <th class="py-2.5 px-3 text-center bg-teal-900 text-teal-100">🎯 目標需求</th>
+                            <th class="py-2.5 px-3 border-l border-slate-800">目前處方提供</th>
+                            <th class="py-2.5 px-3 text-center">目前落差</th>
+                            <th class="py-2.5 px-3 border-l border-slate-800 bg-teal-950 text-teal-100">新處方提供</th>
+                            <th class="py-2.5 px-3 text-center bg-teal-950/40 text-teal-200">新處方落差</th>
+                            <th class="py-2.5 px-3 border-l border-slate-800 bg-slate-800 text-amber-300 text-center">新舊變更 (Δ)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="gap_table_body" class="divide-y divide-slate-100 bg-white"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 階段四：藥局原料實際調配模擬與沉澱破乳標記 (2018.10.08 知識庫) -->
+        <section id="sec_compounding" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 space-y-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-slate-100 gap-2">
+                <div class="flex items-center gap-2">
+                    <span class="w-6 h-6 rounded bg-teal-600 text-white flex items-center justify-center font-bold text-xs">5</span>
+                    <div>
+                        <h2 class="text-base font-bold text-slate-900">
+                            藥局原料實際調配模擬與無法進食狀態標記
+                        </h2>
+                        <p class="text-[11px] text-slate-500">依據 2018.10.08 藥劑科無菌調劑濃度規格與 ASPEN 沉澱相容性準則</p>
+                    </div>
+                </div>
+                <button type="button" onclick="toggleCalcTools()" class="text-xs font-bold text-teal-700 bg-teal-50 px-2.5 py-1 rounded-lg border border-teal-200 hover:bg-teal-100 self-start sm:self-auto">
+                    🧮 <span id="btn_calc_tools_text">展開臨床校正公式</span>
+                </button>
+            </div>
+
+            <!-- Prominent Barrier/Warning Banner -->
+            <div id="comp_status_banner" class="p-3.5 rounded-xl border transition-all bg-emerald-50 border-emerald-300 text-slate-900">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div class="space-y-1">
+                        <span id="comp_badge" class="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-black bg-emerald-600 text-white shadow-xs">
+                            ✓ 原料調配可行
+                        </span>
+                        <p id="comp_summary" class="text-xs text-slate-700">原料濃度在安全調劑範圍內，無結晶沉澱或破乳阻礙。</p>
+                    </div>
+                    <div class="flex items-center gap-3 bg-white/80 p-2 rounded-lg border border-slate-200 text-xs">
+                        <div>原料總量: <strong id="comp_total_vol" class="text-slate-900 font-mono font-bold">--</strong> ml</div>
+                        <div class="h-4 w-px bg-slate-300"></div>
+                        <div>注水空間: <strong id="comp_water_vol" class="text-teal-700 font-mono font-bold">--</strong> ml</div>
+                    </div>
+                </div>
+
+                <!-- Danger Barrier List -->
+                <div id="comp_barrier_box" class="mt-2.5 pt-2.5 border-t border-rose-200 text-xs text-rose-800 space-y-1 hidden">
+                    <strong class="text-rose-900 block font-bold">❌ 調配阻礙與無法進食使用之致命警示 (Must Resolve Before Compounding):</strong>
+                    <ul id="comp_barrier_list" class="list-disc pl-5 space-y-0.5"></ul>
+                </div>
+
+                <!-- Warning Notes List -->
+                <div id="comp_warning_box" class="mt-2.5 pt-2.5 border-t border-amber-200 text-xs text-amber-800 space-y-0.5 hidden">
+                    <strong class="text-amber-900 block font-bold">⚠️ 臨床相容性與輸注注意事項:</strong>
+                    <ul id="comp_warning_list" class="list-disc pl-5 space-y-0.5"></ul>
+                </div>
+            </div>
+
+            <!-- Volume Progress Bar -->
+            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
+                <div class="flex justify-between text-xs font-bold text-slate-700">
+                    <span>1000 ml 容量原料佔比量表</span>
+                    <span id="comp_gauge_text" class="font-mono">-- / 1000 ml</span>
+                </div>
+                <div class="w-full bg-slate-200 h-3 rounded-full overflow-hidden relative">
+                    <div id="comp_meter_bar" class="h-full bg-teal-600 transition-all" style="width: 50%;"></div>
+                </div>
+            </div>
+
+            <!-- Raw Ingredients Table Toggle -->
+            <div>
+                <button type="button" onclick="toggleIngTable()" class="text-xs font-bold text-slate-700 hover:text-teal-700 flex items-center gap-1">
+                    <span>▼ 檢視藥局原料抽取量明細 (每 1000 ml 主配方)</span>
+                </button>
+                <div id="ing_table_wrapper" class="mt-2 overflow-x-auto rounded-xl border border-slate-200 hidden">
+                    <table class="w-full text-left text-xs whitespace-nowrap">
+                        <thead class="bg-slate-800 text-white text-[11px]">
+                            <tr>
+                                <th class="p-2">原料名稱</th>
+                                <th class="p-2">濃度規格</th>
+                                <th class="p-2 text-right">抽取體積 (ml)</th>
+                                <th class="p-2">調劑備註</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ing_table_body" class="divide-y divide-slate-100 bg-white"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Clinical Calculator Tools (Collapsible) -->
+            <div id="calc_tools_block" class="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-3 hidden">
+                <h4 class="text-xs font-bold text-teal-900 flex items-center gap-1">
+                    🧮 臨床生化校正計算工具 (KB Formulas)
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                    <!-- Tool 1: Corrected Ca -->
+                    <div class="p-2.5 bg-white rounded-lg border border-slate-200 space-y-1.5">
+                        <strong class="text-slate-800 block font-bold">1. 白蛋白校正鈣 (Corrected Ca)</strong>
+                        <div class="grid grid-cols-2 gap-1 text-[11px]">
+                            <div><label class="text-slate-400">實測 Ca (mg/dL)</label><input type="number" id="calc_ca_meas" value="8.0" step="0.1" class="w-full border rounded p-1 text-center" oninput="runCalcTools()"></div>
+                            <div><label class="text-slate-400">Albumin (g/dL)</label><input type="number" id="calc_alb" value="3.0" step="0.1" class="w-full border rounded p-1 text-center" oninput="runCalcTools()"></div>
+                        </div>
+                        <div class="text-teal-800 font-bold text-right pt-1">校正鈣: <span id="res_corr_ca" class="font-mono text-sm underline">8.8</span> mg/dL</div>
+                    </div>
+
+                    <!-- Tool 2: Na Deficit -->
+                    <div class="p-2.5 bg-white rounded-lg border border-slate-200 space-y-1.5">
+                        <strong class="text-slate-800 block font-bold">2. 鈉缺乏量 (Na Deficit)</strong>
+                        <div class="grid grid-cols-2 gap-1 text-[11px]">
+                            <div><label class="text-slate-400">目標 Na (mEq/L)</label><input type="number" id="calc_na_target" value="135" class="w-full border rounded p-1 text-center" oninput="runCalcTools()"></div>
+                            <div><label class="text-slate-400">目前血鈉</label><input type="number" id="calc_na_curr" value="128" class="w-full border rounded p-1 text-center" oninput="runCalcTools()"></div>
+                        </div>
+                        <div class="text-teal-800 font-bold text-right pt-1">缺乏鈉量: <span id="res_na_deficit" class="font-mono text-sm underline">273</span> mmol</div>
+                    </div>
+
+                    <!-- Tool 3: Expected Na delta -->
+                    <div class="p-2.5 bg-white rounded-lg border border-slate-200 space-y-1.5">
+                        <strong class="text-slate-800 block font-bold">3. 輸注後預期血鈉上升 (Delta Na)</strong>
+                        <div class="text-[11px] text-slate-500">處方液鈉濃度: <span id="calc_infusate_na" class="font-mono font-bold text-slate-700">--</span> mEq/L</div>
+                        <div class="text-teal-800 font-bold text-right pt-1">每升預期血鈉 Δ: <span id="res_na_delta" class="font-mono text-sm underline">--</span> mEq/L</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 階段五：建議醫囑開立與 HIS 匯入格式 -->
+        <section id="sec_order" class="bg-slate-900 rounded-2xl border border-slate-800 shadow-md p-4 sm:p-5 text-slate-100 space-y-3">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+                <div class="flex items-center gap-2">
+                    <span class="w-6 h-6 rounded bg-amber-500 text-slate-950 flex items-center justify-center font-bold text-xs">6</span>
+                    <h2 class="text-base font-bold text-amber-400">建議醫囑開立與 HIS 匯入格式</h2>
+                </div>
+                <button type="button" onclick="copyOrderText()" id="btn_copy_order" class="px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold rounded-lg text-xs transition shadow-sm">
+                    複製醫囑文字
+                </button>
+            </div>
+            <div id="order_output_box" class="bg-slate-950 p-3 sm:p-4 rounded-xl font-mono text-xs text-emerald-400 whitespace-pre-wrap leading-relaxed border border-slate-800"></div>
+        </section>
+
+    </main>
+
+    <!-- Mobile Sticky Bottom Navigation Dock (lg:hidden) -->
+    <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-2 py-1.5 shadow-xl grid grid-cols-5 gap-1">
+        <button type="button" onclick="scrollToSec('sec_patient')" class="py-1.5 text-center text-slate-600 hover:bg-slate-100 rounded-lg">
+            <span class="block text-sm">👤</span>
+            <span class="text-[10px] font-bold">1 評估</span>
+        </button>
+        <button type="button" onclick="scrollToSec('sec_formula')" class="py-1.5 text-center text-teal-800 hover:bg-slate-100 rounded-lg font-bold">
+            <span class="block text-sm">🧪</span>
+            <span class="text-[10px]">2 配方</span>
+        </button>
+        <button type="button" onclick="scrollToSec('sec_analysis')" class="py-1.5 text-center text-slate-600 hover:bg-slate-100 rounded-lg">
+            <span class="block text-sm">📊</span>
+            <span class="text-[10px] font-bold">3 差距</span>
+        </button>
+        <button type="button" onclick="scrollToSec('sec_compounding')" class="py-1.5 text-center text-slate-600 hover:bg-slate-100 rounded-lg">
+            <span class="block text-sm">⚗️</span>
+            <span class="text-[10px] font-bold">4 調配</span>
+        </button>
+        <button type="button" onclick="scrollToSec('sec_order')" class="py-1.5 text-center text-amber-700 hover:bg-slate-100 rounded-lg">
+            <span class="block text-sm">📝</span>
+            <span class="text-[10px] font-bold">5 醫囑</span>
+        </button>
+    </nav>
+
+    <!-- Database CSV Manager Modal -->
+    <div id="db_modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-3 sm:p-4">
+        <div class="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+            <div class="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                    <span>📁 藥品資料庫管理 (CSV 試算表 / Excel 格式)</span>
+                </h3>
+                <button type="button" onclick="closeDbModal()" class="text-slate-400 hover:text-slate-600 p-1 text-lg font-bold">&times;</button>
+            </div>
+
+            <div class="p-4 sm:p-6 overflow-y-auto space-y-4 text-xs">
+                <!-- Export Section -->
+                <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                    <strong class="text-sm font-bold text-slate-800 block">1. 匯出目前藥品資料庫 (CSV 格式)</strong>
+                    <p class="text-slate-500">下載具備 UTF-8 BOM 之 CSV 檔案，可直接使用 Microsoft Excel 開啟編輯（數值以每 1000ml 標準含量填寫）。</p>
+                    <div class="flex flex-wrap gap-2 pt-1">
+                        <button type="button" onclick="exportDbToCsv()" class="px-3.5 py-2 bg-teal-600 text-white font-bold rounded-lg hover:bg-teal-700 shadow-xs">
+                            下載目前資料庫 CSV (.csv)
+                        </button>
+                        <button type="button" onclick="downloadSampleCsv()" class="px-3 py-2 bg-white border border-slate-300 text-slate-700 font-semibold rounded-lg hover:bg-slate-100">
+                            下載空白 CSV 範本
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Import Section -->
+                <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                    <strong class="text-sm font-bold text-slate-800 block">2. 匯入更新藥品資料庫 (CSV 檔案)</strong>
+                    <p class="text-slate-500">選擇在 Excel 編輯完成後的 CSV 檔案上傳更新：</p>
+                    <input type="file" id="csv_file_input" accept=".csv,text/csv" onchange="handleCsvFileSelect(event)" class="block w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-teal-600 file:text-white file:font-bold cursor-pointer">
+                    
+                    <div id="csv_preview_box" class="mt-2 p-2 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-900 hidden space-y-1">
+                        <span id="csv_preview_text" class="font-bold">驗證成功</span>
+                        <div class="flex gap-3 text-[11px] pt-1">
+                            <label class="cursor-pointer font-bold"><input type="radio" name="csv_import_mode" value="merge" checked> 增量合併 (Merge)</label>
+                            <label class="cursor-pointer font-bold"><input type="radio" name="csv_import_mode" value="overwrite"> 完全覆蓋 (Overwrite)</label>
+                        </div>
+                        <button type="button" onclick="applyCsvImport()" class="mt-2 px-3 py-1.5 bg-teal-700 text-white font-bold rounded shadow-xs">確認匯入資料庫</button>
+                    </div>
+                </div>
+
+                <!-- Restore Default -->
+                <div class="p-3 border border-rose-200 bg-rose-50 rounded-xl flex items-center justify-between">
+                    <div>
+                        <strong class="text-rose-900 block font-bold">還原系統原廠預設</strong>
+                        <span class="text-rose-700 text-[11px]">清除自訂暫存，恢復至 2018.10.08 / ASPEN 標準院內處方庫</span>
+                    </div>
+                    <button type="button" onclick="restoreDefaultDb()" class="px-3 py-1.5 bg-rose-600 text-white font-bold rounded-lg hover:bg-rose-700 shadow-xs">還原預設</button>
+                </div>
+            </div>
+
+            <div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-end">
+                <button type="button" onclick="closeDbModal()" class="px-4 py-1.5 bg-slate-200 text-slate-700 font-semibold rounded-lg hover:bg-slate-300">關閉</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Embedded Complete Core JavaScript -->
+    <script>
+        // --- 1. 標準配方資料庫 (含 2018.10.08 調劑規格) ---
+        const DEFAULT_DB = {
+            main: {
+                '': { name: '-- 選擇主配方 --', kcal: 0, protein: 0, lipid: 0, cho: 0, na: 0, k: 0, p: 0, ca: 0, mg: 0, zn: 0, vialVol: 1000 },
+                'smof_c': { name: "SmofKabiven Central (1477ml)", kcal: 1.083, protein: 0.0507, lipid: 0.0385, cho: 0.0846, na: 0.0406, k: 0.0304, p: 0.0128, ca: 0.0050, mg: 0.0100, zn: 0.0026, vialVol: 1477, isPeripheral: false },
+                'smof_p': { name: "SmofKabiven PI (1448ml)", kcal: 0.691, protein: 0.0317, lipid: 0.0283, cho: 0.0711, na: 0.0248, k: 0.0193, p: 0.0082, ca: 0.0030, mg: 0.0062, zn: 0, vialVol: 1448, isPeripheral: true },
+                'periolimel': { name: "PeriOlimel N4E (1500ml)", kcal: 0.700, protein: 0.0253, lipid: 0.0300, cho: 0.0750, na: 0.0210, k: 0.0160, p: 0.0084, ca: 0.0040, mg: 0.0044, zn: 0, vialVol: 1500, isPeripheral: true },
+                'std_a5d21': { name: "TPN Standard A5D21 (1000ml)", kcal: 0.914, protein: 0.0500, lipid: 0, cho: 0.2100, na: 0.0450, k: 0.0280, p: 0.0135, ca: 0.0040, mg: 0.0200, zn: 0.0028, vialVol: 1000, isPeripheral: false },
+                'hn': { name: "TPN High Nitrogen (1000ml)", kcal: 0.801, protein: 0.0600, lipid: 0, cho: 0.1650, na: 0.0300, k: 0.0280, p: 0.0135, ca: 0.0040, mg: 0.0200, zn: 0.0028, vialVol: 1000, isPeripheral: false },
+                'hepatic': { name: "TPN Hepatic 肝衰竭配方 (1000ml)", kcal: 0.809, protein: 0.0450, lipid: 0, cho: 0.1850, na: 0.0300, k: 0.0280, p: 0.0135, ca: 0.0040, mg: 0.0200, zn: 0.0028, vialVol: 1000, isPeripheral: false },
+                'renal': { name: "TPN Renal 腎衰竭配方 (1000ml)", kcal: 0.905, protein: 0.0350, lipid: 0, cho: 0.2250, na: 0, k: 0, p: 0, ca: 0.0080, mg: 0, zn: 0.0011, vialVol: 1000, isPeripheral: false },
+                'bfluid': { name: "BFLUID 必扶力 (500ml)", kcal: 0.375, protein: 0.0300, lipid: 0, cho: 0.0750, na: 0.0350, k: 0.0200, p: 0.0100, ca: 0.0045, mg: 0.0050, zn: 0, vialVol: 500, isPeripheral: true },
+                'ntuh1': { name: "台大1號 (500ml)", kcal: 0.152, protein: 0, lipid: 0, cho: 0.0380, na: 0.025, k: 0.018, p: 0.006, ca: 0, mg: 0.006, zn: 0, vialVol: 500, isPeripheral: true },
+                'ntuh2': { name: "台大2號 (500ml)", kcal: 0.132, protein: 0, lipid: 0, cho: 0.0330, na: 0.040, k: 0.012, p: 0.006, ca: 0, mg: 0, zn: 0, vialVol: 500, isPeripheral: true }
+            },
+            sub: {
+                '': { name: '-- 無外加脂肪乳劑 --', kcal: 0, protein: 0, lipid: 0, cho: 0, na: 0, k: 0, p: 0, ca: 0, mg: 0, zn: 0, vialVol: 0 },
+                'smof20_250': { name: "SMOFlipid 20% (250ml)", kcal: 2.0, protein: 0, lipid: 0.20, cho: 0, na: 0, k: 0, p: 0, ca: 0, mg: 0, zn: 0, vialVol: 250 },
+                'smof20_100': { name: "SMOFlipid 20% (100ml)", kcal: 2.0, protein: 0, lipid: 0.20, cho: 0, na: 0, k: 0, p: 0, ca: 0, mg: 0, zn: 0, vialVol: 100 },
+                'lipovenoes20': { name: "Lipovenoes 20% (100ml)", kcal: 2.0, protein: 0, lipid: 0.20, cho: 0, na: 0, k: 0, p: 0, ca: 0, mg: 0, zn: 0, vialVol: 100 }
+            },
+            trace: {
+                '': { name: '-- 無微量元素 --', kcal: 0, protein: 0, lipid: 0, cho: 0, na: 0, k: 0, p: 0, ca: 0, mg: 0, zn: 0, vialVol: 0 },
+                'addamel': { name: "Addamel N (10ml/支)", kcal: 0, protein: 0, lipid: 0, cho: 0, na: 0, k: 0, p: 0, ca: 0, mg: 0, zn: 0.65, vialVol: 10 },
+                'tracutil': { name: "Tracutil 查枯特 (10ml/支)", kcal: 0, protein: 0, lipid: 0, cho: 0, na: 0, k: 0, p: 0, ca: 0, mg: 0, zn: 1.0, vialVol: 10 }
+            },
+            add: {
+                'nacl': { name: "高濃度 NaCl (4 mEq/ml, 20ml)", kcal: 0, protein: 0, lipid: 0, cho: 0, na: 4.0, k: 0, p: 0, ca: 0, mg: 0, zn: 0, vialVol: 20 },
+                'kcl15': { name: "15% KCl (2 mEq/ml, 20ml)", kcal: 0, protein: 0, lipid: 0, cho: 0, na: 0, k: 2.0, p: 0, ca: 0, mg: 0, zn: 0, vialVol: 20 },
+                'kphos': { name: "K-Phosphate (K 4.4, P 3 mmol/ml, 20ml)", kcal: 0, protein: 0, lipid: 0, cho: 0, na: 0, k: 4.4, p: 3.0, ca: 0, mg: 0, zn: 0, vialVol: 20 },
+                'naphos': { name: "Na-Phosphate (Na 4, P 3 mmol/ml, 20ml)", kcal: 0, protein: 0, lipid: 0, cho: 0, na: 4.0, k: 0, p: 3.0, ca: 0, mg: 0, zn: 0, vialVol: 20 },
+                'cagluc': { name: "10% Ca Gluconate (0.465 mEq/ml, 20ml)", kcal: 0, protein: 0, lipid: 0, cho: 0, na: 0, k: 0, p: 0, ca: 0.465, mg: 0, zn: 0, vialVol: 20 },
+                'mgso4': { name: "10% MgSO4 (0.81 mEq/ml, 20ml)", kcal: 0, protein: 0, lipid: 0, cho: 0, na: 0, k: 0, p: 0, ca: 0, mg: 0.81, zn: 0, vialVol: 20 },
+                'lyo_povigen': { name: "Lyo-Povigen 綜合維生素 (10ml)", kcal: 0, protein: 0, lipid: 0, cho: 0, na: 0, k: 0, p: 0, ca: 0, mg: 0, zn: 0, vialVol: 10 }
+            }
+        };
+
+        // Current active database from localStorage or default
+        let db = JSON.parse(localStorage.getItem('tpn_standalone_db_v1')) || DEFAULT_DB;
+
+        // Current & Target state
+        let targets = { kcal: 1800, protein: 78, lipid: 65, cho: 230, na: 65, k: 65, p: 30, ca: 10, mg: 15, zn: 6.5 };
+        let customTargetsActive = false;
+
+        let currRegimen = {
+            mainId: 'std_a5d21', mainRate: 41.7, mainVol: 1000,
+            subId: '', subVials: 0,
+            traceId: 'addamel', traceVials: 1,
+            additives: [{ id: 'c_add_1', addId: 'lyo_povigen', vials: 1 }]
+        };
+
+        let newRegimen = {
+            mainId: 'smof_c', mainRate: 61.5, mainVol: 1477,
+            isCustomMain: false,
+            customMain: { kcal: 1083, protein: 50.7, lipid: 38.5, cho: 84.6, na: 40.6, k: 30.4, p: 12.8, ca: 5, mg: 10, zn: 2.6 },
+            subId: '', subVials: 0,
+            traceId: 'addamel', traceVials: 1,
+            additives: [
+                { id: 'n_add_1', addId: 'lyo_povigen', vials: 1 },
+                { id: 'n_add_2', addId: 'nacl', vials: 0.5 }
+            ]
+        };
+
+        // --- 2. 初始化與下拉選單填入 ---
+        function initSelects() {
+            populateSelect('curr_main_sel', db.main, currRegimen.mainId);
+            populateSelect('new_main_sel', db.main, newRegimen.mainId);
+            populateSelect('curr_lipid_sel', db.sub, currRegimen.subId);
+            populateSelect('new_lipid_sel', db.sub, newRegimen.subId);
+            populateSelect('curr_trace_sel', db.trace, currRegimen.traceId);
+            populateSelect('new_trace_sel', db.trace, newRegimen.traceId);
+
+            document.getElementById('curr_main_rate').value = currRegimen.mainRate;
+            document.getElementById('curr_main_vol').value = currRegimen.mainVol;
+            document.getElementById('new_main_rate').value = newRegimen.mainRate;
+            document.getElementById('new_main_vol').value = newRegimen.mainVol;
+            document.getElementById('curr_lipid_vials').value = currRegimen.subVials;
+            document.getElementById('new_lipid_vials').value = newRegimen.subVials;
+            document.getElementById('curr_trace_vials').value = currRegimen.traceVials;
+            document.getElementById('new_trace_vials').value = newRegimen.traceVials;
+
+            renderAdditiveRows('curr');
+            renderAdditiveRows('new');
+        }
+
+        function populateSelect(selectId, items, selectedVal) {
+            const el = document.getElementById(selectId);
+            if (!el) return;
+            el.innerHTML = Object.entries(items).map(([id, item]) => 
+                `<option value="${id}" ${id === selectedVal ? 'selected' : ''}>${item.name}</option>`
+            ).join('');
+        }
+
+        // --- 3. 病患生理評估計算 ---
+        function calcPatientNeeds() {
+            const gender = document.getElementById('p_gender').value;
+            const age = parseFloat(document.getElementById('p_age').value) || 60;
+            const height = parseFloat(document.getElementById('p_height').value) || 165;
+            const weight = parseFloat(document.getElementById('p_weight').value) || 60;
+            const af = parseFloat(document.getElementById('p_af').value) || 1.0;
+            const sf = parseFloat(document.getElementById('p_sf').value) || 1.2;
+            const useAdj = document.getElementById('p_use_adj').checked;
+
+            const heightM = height / 100;
+            const bmi = heightM > 0 ? Number((weight / (heightM * heightM)).toFixed(1)) : 22;
+            document.getElementById('m_bmi').textContent = bmi;
+
+            const isObese = bmi >= 30;
+            let ibw = gender === 'male' ? 50 + 0.91 * (height - 152.4) : 45.5 + 0.91 * (height - 152.4);
+            ibw = Math.max(30, Number(ibw.toFixed(1)));
+            document.getElementById('m_ibw').textContent = ibw;
+
+            const adjBw = isObese ? Number((ibw + 0.25 * (weight - ibw)).toFixed(1)) : weight;
+            document.getElementById('m_adjbw').textContent = adjBw;
+            document.getElementById('m_adj_block').classList.toggle('hidden', !isObese);
+
+            const evalWeight = isObese && useAdj ? adjBw : weight;
+            let bmr = Math.round(10 * evalWeight + 6.25 * height - 5 * age + (gender === 'male' ? 5 : -161));
+            bmr = Math.max(500, bmr);
+            document.getElementById('m_bmr').textContent = bmr;
+
+            const tee = Math.round(bmr * af * sf);
+            document.getElementById('m_tee').textContent = tee;
+
+            if (!customTargetsActive) {
+                targets.kcal = tee;
+                targets.protein = Number((weight * (sf >= 1.5 ? 1.5 : 1.2)).toFixed(1));
+                targets.lipid = Number((weight * 1.0).toFixed(1));
+                targets.cho = Math.round(Math.max(100, (tee - targets.protein * 4 - targets.lipid * 9) / 3.4));
+                targets.na = Math.round(weight * 1.0);
+                targets.k = Math.round(weight * 1.0);
+                targets.p = Math.round(weight * 0.4);
+                targets.ca = 10;
+                targets.mg = 15;
+                targets.zn = 6.5;
+
+                syncTargetsToInputs();
+            }
+
+            updateAllCalculations();
+        }
+
+        function syncTargetsToInputs() {
+            for (const [k, v] of Object.entries(targets)) {
+                const el = document.getElementById(`tar_${k}`);
+                if (el) el.value = v;
+            }
+        }
+
+        function applyCustomTargetChange() {
+            customTargetsActive = true;
+            for (const k of Object.keys(targets)) {
+                const el = document.getElementById(`tar_${k}`);
+                if (el) targets[k] = parseFloat(el.value) || 0;
+            }
+            updateAllCalculations();
+        }
+
+        function resetTargetsToDefault() {
+            customTargetsActive = false;
+            calcPatientNeeds();
+        }
+
+        function toggleTargetAdjust() {
+            const el = document.getElementById('target_adjust_block');
+            const isHidden = el.classList.contains('hidden');
+            el.classList.toggle('hidden');
+            document.getElementById('btn_target_toggle_text').textContent = isHidden ? '收合目標微調' : '展開目標微調';
+        }
+
+        // --- 4. 配方輸入與流速連動 ---
+        function onMainSelect(prefix) {
+            const sel = document.getElementById(`${prefix}_main_sel`).value;
+            const item = db.main[sel];
+            let vol = item?.vialVol || 1000;
+            let rate = Number((vol / 24).toFixed(1));
+
+            if (prefix === 'curr') {
+                currRegimen.mainId = sel;
+                currRegimen.mainVol = vol;
+                currRegimen.mainRate = rate;
+                document.getElementById('curr_main_vol').value = vol;
+                document.getElementById('curr_main_rate').value = rate;
+            } else {
+                newRegimen.mainId = sel;
+                newRegimen.mainVol = vol;
+                newRegimen.mainRate = rate;
+                document.getElementById('new_main_vol').value = vol;
+                document.getElementById('new_main_rate').value = rate;
+
+                if (item) {
+                    newRegimen.customMain = {
+                        kcal: Math.round(item.kcal * 1000),
+                        protein: Number((item.protein * 1000).toFixed(1)),
+                        lipid: Number((item.lipid * 1000).toFixed(1)),
+                        cho: Number((item.cho * 1000).toFixed(1)),
+                        na: Number((item.na * 1000).toFixed(1)),
+                        k: Number((item.k * 1000).toFixed(1)),
+                        p: Number((item.p * 1000).toFixed(1)),
+                        ca: Number((item.ca * 1000).toFixed(1)),
+                        mg: Number((item.mg * 1000).toFixed(1)),
+                        zn: Number((item.zn * 1000).toFixed(1))
+                    };
+                    syncNewCustomInputs();
+                }
+            }
+            updateAllCalculations();
+        }
+
+        function onRateInput(prefix) {
+            const rate = parseFloat(document.getElementById(`${prefix}_main_rate`).value) || 0;
+            const vol = Math.round(rate * 24);
+            document.getElementById(`${prefix}_main_vol`).value = vol;
+            if (prefix === 'curr') {
+                currRegimen.mainRate = rate;
+                currRegimen.mainVol = vol;
+            } else {
+                newRegimen.mainRate = rate;
+                newRegimen.mainVol = vol;
+            }
+            updateAllCalculations();
+        }
+
+        function onVolInput(prefix) {
+            const vol = parseFloat(document.getElementById(`${prefix}_main_vol`).value) || 0;
+            const rate = Number((vol / 24).toFixed(1));
+            document.getElementById(`${prefix}_main_rate`).value = rate;
+            if (prefix === 'curr') {
+                currRegimen.mainVol = vol;
+                currRegimen.mainRate = rate;
+            } else {
+                newRegimen.mainVol = vol;
+                newRegimen.mainRate = rate;
+            }
+            updateAllCalculations();
+        }
+
+        function adjustNewRate(delta) {
+            let r = parseFloat(document.getElementById('new_main_rate').value) || 0;
+            r = Math.max(0, Number((r + delta).toFixed(1)));
+            document.getElementById('new_main_rate').value = r;
+            onRateInput('new');
+        }
+
+        function onLipidSelect(prefix) {
+            const sel = document.getElementById(`${prefix}_lipid_sel`).value;
+            const vialsInput = document.getElementById(`${prefix}_lipid_vials`);
+            if (sel && (!vialsInput.value || vialsInput.value == 0)) {
+                vialsInput.value = 1;
+            } else if (!sel) {
+                vialsInput.value = 0;
+            }
+            updateAllCalculations();
+        }
+
+        function toggleNewCustomMain() {
+            const chk = document.getElementById('new_custom_toggle').checked;
+            newRegimen.isCustomMain = chk;
+            document.getElementById('new_custom_grid').classList.toggle('hidden', !chk);
+            updateAllCalculations();
+        }
+
+        function syncNewCustomInputs() {
+            for (const [k, v] of Object.entries(newRegimen.customMain)) {
+                const el = document.getElementById(`new_c_${k}`);
+                if (el) el.value = v;
+            }
+        }
+
+        function copyCurrToNew() {
+            newRegimen.mainId = currRegimen.mainId;
+            newRegimen.mainRate = currRegimen.mainRate;
+            newRegimen.mainVol = currRegimen.mainVol;
+            newRegimen.subId = currRegimen.subId;
+            newRegimen.subVials = currRegimen.subVials;
+            newRegimen.traceId = currRegimen.traceId;
+            newRegimen.traceVials = currRegimen.traceVials;
+            newRegimen.additives = currRegimen.additives.map(a => ({ ...a, id: 'n_' + Date.now() + Math.random().toString(36).substring(2,5) }));
+
+            initSelects();
+            updateAllCalculations();
+        }
+
+        function addAdditiveRow(prefix) {
+            const target = prefix === 'curr' ? currRegimen : newRegimen;
+            const firstAddId = Object.keys(db.add)[0] || 'nacl';
+            target.additives.push({
+                id: prefix + '_' + Date.now() + Math.random().toString(36).substring(2,5),
+                addId: firstAddId,
+                vials: 1
+            });
+            renderAdditiveRows(prefix);
+            updateAllCalculations();
+        }
+
+        function removeAdditiveRow(prefix, rowId) {
+            const target = prefix === 'curr' ? currRegimen : newRegimen;
+            target.additives = target.additives.filter(a => a.id !== rowId);
+            renderAdditiveRows(prefix);
+            updateAllCalculations();
+        }
+
+        function updateAdditiveRow(prefix, rowId, addId, vials) {
+            const target = prefix === 'curr' ? currRegimen : newRegimen;
+            const item = target.additives.find(a => a.id === rowId);
+            if (item) {
+                item.addId = addId;
+                item.vials = parseFloat(vials) || 0;
+            }
+            updateAllCalculations();
+        }
+
+        function renderAdditiveRows(prefix) {
+            const target = prefix === 'curr' ? currRegimen : newRegimen;
+            const container = document.getElementById(`${prefix}_additives_list`);
+            if (!container) return;
+
+            if (target.additives.length === 0) {
+                container.innerHTML = `<div class="text-[11px] text-slate-400 py-1 text-center">無單方添加劑</div>`;
+                return;
+            }
+
+            container.innerHTML = target.additives.map(row => {
+                const options = Object.entries(db.add).map(([id, item]) => 
+                    `<option value="${id}" ${id === row.addId ? 'selected' : ''}>${item.name}</option>`
+                ).join('');
+                const item = db.add[row.addId];
+                const vol = (row.vials * (item?.vialVol || 0)).toFixed(0);
+
+                return `
+                    <div class="flex items-center gap-1.5 bg-white p-1.5 rounded-lg border border-amber-200">
+                        <select class="flex-1 text-[11px] border rounded p-1 bg-slate-50" onchange="updateAdditiveRow('${prefix}', '${row.id}', this.value, ${row.vials})">
+                            ${options}
+                        </select>
+                        <input type="number" step="0.5" min="0" value="${row.vials}" class="w-14 text-[11px] border rounded p-1 text-center font-bold" oninput="updateAdditiveRow('${prefix}', '${row.id}', '${row.addId}', this.value)">
+                        <span class="text-[10px] text-slate-400 font-mono w-12 text-center">${vol}ml</span>
+                        <button type="button" onclick="removeAdditiveRow('${prefix}', '${row.id}')" class="text-rose-500 hover:text-rose-700 px-1 font-bold">&times;</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // --- 5. 總量計算引擎與調劑相容性檢查 (2018.10.08 知識庫) ---
+        function calculateRegimen(prefix) {
+            const mainId = document.getElementById(`${prefix}_main_sel`).value;
+            const mainVol = parseFloat(document.getElementById(`${prefix}_main_vol`).value) || 0;
+            const lipidId = document.getElementById(`${prefix}_lipid_sel`).value;
+            const lipidVials = parseFloat(document.getElementById(`${prefix}_lipid_vials`).value) || 0;
+            const traceId = document.getElementById(`${prefix}_trace_sel`).value;
+            const traceVials = parseFloat(document.getElementById(`${prefix}_trace_vials`).value) || 0;
+
+            const res = { kcal: 0, protein: 0, lipid: 0, cho: 0, na: 0, k: 0, p: 0, ca: 0, mg: 0, zn: 0, volume: mainVol };
+
+            // 1. Main formulation
+            if (prefix === 'new' && newRegimen.isCustomMain) {
+                const ratio = mainVol / 1000;
+                for (const [k, v] of Object.entries(newRegimen.customMain)) {
+                    res[k] += (parseFloat(v) || 0) * ratio;
+                }
+            } else if (mainId && db.main[mainId]) {
+                const item = db.main[mainId];
+                for (const k of Object.keys(res)) {
+                    if (k !== 'volume') res[k] += (item[k] || 0) * mainVol;
+                }
+            }
+
+            // 2. Lipid
+            if (lipidId && db.sub[lipidId]) {
+                const item = db.sub[lipidId];
+                const vol = lipidVials * (item.vialVol || 0);
+                res.volume += vol;
+                for (const k of Object.keys(res)) {
+                    if (k !== 'volume') res[k] += (item[k] || 0) * vol;
+                }
+                const volText = document.getElementById(`${prefix}_lipid_vol_text`);
+                if (volText) volText.textContent = `${vol} ml`;
+            }
+
+            // 3. Trace
+            if (traceId && db.trace[traceId]) {
+                const item = db.trace[traceId];
+                const vol = traceVials * (item.vialVol || 0);
+                res.volume += vol;
+                for (const k of Object.keys(res)) {
+                    if (k !== 'volume') res[k] += (item[k] || 0) * vol;
+                }
+            }
+
+            // 4. Additives
+            const target = prefix === 'curr' ? currRegimen : newRegimen;
+            target.additives.forEach(row => {
+                const item = db.add[row.addId];
+                if (item) {
+                    const vol = (row.vials || 0) * (item.vialVol || 0);
+                    res.volume += vol;
+                    for (const k of Object.keys(res)) {
+                        if (k !== 'volume') res[k] += (item[k] || 0) * vol;
+                    }
+                }
+            });
+
+            // Clinical metrics
+            const weight = parseFloat(document.getElementById('p_weight').value) || 60;
+            res.gir = (weight > 0) ? (res.cho * 1000) / (weight * 1440) : 0;
+            res.osm = res.volume > 0 ? Math.round((res.cho * 5 + res.protein * 10 + (res.na + res.k) * 2) / (res.volume / 1000)) : 0;
+            res.nitrogen = res.protein / 6.25;
+            res.npc = res.cho * 3.4 + res.lipid * 9;
+            res.npcn = res.nitrogen > 0 ? Math.round(res.npc / res.nitrogen) : 0;
+
+            return res;
+        }
+
+        // --- 6. 藥局原料抽取與相容性檢查 (2018.10.08) ---
+        function evaluateCompounding(calc) {
+            const mainVol = parseFloat(document.getElementById('new_main_vol').value) || 1000;
+            const ratio = mainVol > 0 ? 1000 / mainVol : 1;
+            const per1000 = {
+                cho: calc.cho * ratio,
+                protein: calc.protein * ratio,
+                na: calc.na * ratio,
+                k: calc.k * ratio,
+                p: calc.p * ratio,
+                ca: calc.ca * ratio,
+                mg: calc.mg * ratio,
+                zn: calc.zn * ratio
+            };
+
+            const ingredients = [];
+
+            // G/W 50% = 0.5 g/ml
+            const volD50 = per1000.cho / 0.5;
+            ingredients.push({ name: 'G/W 50% (高濃度葡萄糖)', spec: '0.5 g/ml', vol: Number(volD50.toFixed(1)), note: `醣類 ${per1000.cho.toFixed(1)} g/L` });
+
+            // Amino acid 10% = 0.1 g/ml
+            const volAA = per1000.protein / 0.1;
+            ingredients.push({ name: 'Moriamin-SN 10% (綜合胺基酸)', spec: '0.1 g/ml', vol: Number(volAA.toFixed(1)), note: `蛋白質 ${per1000.protein.toFixed(1)} g/L` });
+
+            // Electrolytes
+            const volKPhos = per1000.p > 0 ? per1000.p / 3.0 : 0;
+            if (volKPhos > 0) {
+                ingredients.push({ name: 'K-Phosphate 磷酸鉀', spec: 'K 4.4, P 3 mmol/ml', vol: Number(volKPhos.toFixed(1)), note: `提供 P ${per1000.p.toFixed(1)} mmol & K ${(volKPhos * 4.4).toFixed(1)} mEq` });
+            }
+
+            const remK = Math.max(0, per1000.k - volKPhos * 4.4);
+            const volKCl = remK / 2.0;
+            if (volKCl > 0) {
+                ingredients.push({ name: '15% KCl 氯化鉀', spec: '2 mEq/ml', vol: Number(volKCl.toFixed(1)), note: `補足餘鉀 ${remK.toFixed(1)} mEq` });
+            }
+
+            const volNaCl = per1000.na / 4.0;
+            if (volNaCl > 0) {
+                ingredients.push({ name: 'NaCl 氯化鈉注射液', spec: '4 mEq/ml', vol: Number(volNaCl.toFixed(1)), note: `提供鈉 ${per1000.na.toFixed(1)} mEq` });
+            }
+
+            const volCa = per1000.ca / 0.465;
+            if (volCa > 0) {
+                ingredients.push({ name: '10% Ca Gluconate 鈣', spec: '0.465 mEq/ml', vol: Number(volCa.toFixed(1)), note: `提供鈣 ${per1000.ca.toFixed(1)} mEq` });
+            }
+
+            const volMg = per1000.mg / 0.81;
+            if (volMg > 0) {
+                ingredients.push({ name: '10% MgSO4 硫酸鎂', spec: '0.81 mEq/ml', vol: Number(volMg.toFixed(1)), note: `提供鎂 ${per1000.mg.toFixed(1)} mEq` });
+            }
+
+            // Fixed MVI & Trace
+            ingredients.push({ name: 'MVI 綜合維生素', spec: '綜合水/脂溶性', vol: 10, note: '標準常規' });
+            ingredients.push({ name: '微量元素 Addamel N', spec: '綜合微量元素', vol: 10, note: '標準常規' });
+
+            const totalRawVol = ingredients.reduce((sum, item) => sum + item.vol, 0);
+            const waterVol = Number((1000 - totalRawVol).toFixed(1));
+            const isOverflow = waterVol < 0;
+
+            ingredients.push({
+                name: 'Water for Injection (滅菌注射用水)',
+                spec: '補足 1000ml',
+                vol: waterVol,
+                note: isOverflow ? '體積溢出！無法注水稀釋！' : '安全緩衝注水餘額'
+            });
+
+            // Physical Incompatibility Checks
+            const barriers = [];
+            const warnings = [];
+
+            if (isOverflow) {
+                barriers.push(`❌ 無法調劑出（原料體積溢出）：濃縮原料總體積達 ${totalRawVol.toFixed(1)} ml 超過 1000ml 物理極限 (破表 +${Math.abs(waterVol)} ml)！無菌室無法濃縮，請降低濃度或增加總容積！`);
+            }
+
+            // Ca-P Precipitation
+            const caMeqL = per1000.ca;
+            const pMmolL = per1000.p;
+            const caPProduct = caMeqL * pMmolL;
+            const caPSum = caMeqL + pMmolL;
+            if (caPSum > 45 || caPProduct > 300) {
+                barriers.push(`❌ 【嚴重沉澱危險，不可輸注進食】：鈣磷濃度和 [Ca]+[P]=${caPSum.toFixed(1)} (乘積 ${caPProduct.toFixed(0)}) 嚴重超出溶解度極限！會產生磷酸氫鈣白色晶體沉澱，堵塞濾器並引起肺微血管栓塞！`);
+            } else if (caPSum > 35) {
+                warnings.push(`⚠️ 鈣磷沉澱邊緣警戒：調配時請務必先將磷酸鹽加入搖勻，最後再加入鈣鹽。`);
+            }
+
+            // Emulsion cracking with lipid
+            const hasLipid = parseFloat(document.getElementById('new_lipid_vials').value) > 0 || db.main[document.getElementById('new_main_sel').value]?.lipid > 0;
+            if (hasLipid && (caMeqL + per1000.mg > 20)) {
+                barriers.push(`❌ 【脂肪乳劑破乳破壞，禁止進食輸注】：三合一配方中二價陽離子總和 [Ca²⁺]+[Mg²⁺]=${(caMeqL + per1000.mg).toFixed(1)} mEq/L 超過 20 mEq/L 上限，中和乳劑 Zeta 電位導致破乳與游離油滴凝聚，有脂肪栓塞風險！`);
+            }
+
+            // Osmolarity route
+            const isPeripheral = db.main[document.getElementById('new_main_sel').value]?.isPeripheral ?? false;
+            if (isPeripheral && calc.osm > 900) {
+                barriers.push(`❌ 【禁止週邊輸注】：預估滲透壓達 ${calc.osm} mOsm/L (> 900 mOsm/L 上限)，會引起劇烈化學性血栓性靜脈炎，必須經由中心靜脈導管 (CVC / PICC) 輸注！`);
+            }
+
+            if (calc.gir > 5.0) {
+                warnings.push(`⚠️ 葡萄糖輸注速率超標 (GIR ${calc.gir.toFixed(2)} > 5.0 mg/kg/min)：易致高血糖與肝脂肪變性。`);
+            }
+
+            return { totalRawVol, waterVol, isOverflow, ingredients, barriers, warnings };
+        }
+
+        // --- 7. 更新所有畫面 ---
+        function updateAllCalculations() {
+            const curr = calculateRegimen('curr');
+            const prop = calculateRegimen('new');
+
+            document.getElementById('curr_vol_total').textContent = Math.round(curr.volume);
+            document.getElementById('new_vol_total').textContent = Math.round(prop.volume);
+
+            // Iso-carbohydrate calculation
+            const newMainItem = db.main[document.getElementById('new_main_sel').value];
+            if (curr.cho > 0 && newMainItem && newMainItem.cho > 0) {
+                const targetVol = curr.cho / newMainItem.cho;
+                const isoRate = Number((targetVol / 24).toFixed(1));
+                document.getElementById('iso_rate_val').textContent = isoRate;
+                document.getElementById('iso_cho_banner').classList.remove('hidden');
+            } else {
+                document.getElementById('iso_cho_banner').classList.add('hidden');
+            }
+
+            // Render Gap Table
+            renderGapTable(curr, prop);
+
+            // Compounding Simulation
+            const comp = evaluateCompounding(prop);
+            renderCompounding(comp);
+
+            // Run Clinical Calc Tools
+            document.getElementById('calc_infusate_na').textContent = prop.volume > 0 ? (prop.na / prop.volume * 1000).toFixed(1) : '0';
+            runCalcTools();
+
+            // Render Order Output
+            renderOrderText(curr, prop, comp);
+        }
+
+        function applyIsoRate() {
+            const r = parseFloat(document.getElementById('iso_rate_val').textContent) || 0;
+            if (r > 0) {
+                document.getElementById('new_main_rate').value = r;
+                onRateInput('new');
+            }
+        }
+
+        function renderGapTable(curr, prop) {
+            const rows = [
+                { label: '熱量 (Kcal)', key: 'kcal', unit: 'kcal', dec: 0, th: 50 },
+                { label: '蛋白質 (Prot)', key: 'protein', unit: 'g', dec: 1, th: 5 },
+                { label: '脂肪 (Lipid)', key: 'lipid', unit: 'g', dec: 1, th: 5 },
+                { label: '醣類 (CHO)', key: 'cho', unit: 'g', dec: 1, th: 10 },
+                { label: '鈉 (Na)', key: 'na', unit: 'mEq', dec: 1, th: 10 },
+                { label: '鉀 (K)', key: 'k', unit: 'mEq', dec: 1, th: 5 },
+                { label: '磷 (P)', key: 'p', unit: 'mmol', dec: 1, th: 3 },
+                { label: '鈣 (Ca)', key: 'ca', unit: 'mEq', dec: 1, th: 2 },
+                { label: '鎂 (Mg)', key: 'mg', unit: 'mEq', dec: 1, th: 2 },
+                { label: '鋅 (Zn)', key: 'zn', unit: 'mg', dec: 1, th: 1 }
+            ];
+
+            const tbody = document.getElementById('gap_table_body');
+            tbody.innerHTML = rows.map(r => {
+                const tar = targets[r.key] || 0;
+                const cVal = curr[r.key] || 0;
+                const pVal = prop[r.key] || 0;
+                const cGap = cVal - tar;
+                const pGap = pVal - tar;
+                const delta = pVal - cVal;
+
+                return `
+                    <tr class="hover:bg-slate-50">
+                        <td class="py-2 px-3 font-bold text-slate-800 sticky-col bg-white">${r.label}</td>
+                        <td class="py-2 px-3 font-bold text-center bg-teal-50 text-teal-900 border-l border-slate-100">${tar.toFixed(r.dec)}</td>
+                        <td class="py-2 px-3 font-semibold text-slate-700 border-l border-slate-100">${cVal.toFixed(r.dec)}</td>
+                        <td class="py-1 px-2 text-center">${renderGapBadge(cGap, r.th, r.dec, r.unit)}</td>
+                        <td class="py-2 px-3 font-bold text-teal-950 bg-teal-50/40 border-l border-slate-100">${pVal.toFixed(r.dec)}</td>
+                        <td class="py-1 px-2 text-center bg-teal-50/40">${renderGapBadge(pGap, r.th, r.dec, r.unit)}</td>
+                        <td class="py-1 px-2 text-center border-l border-slate-200 bg-slate-50">${renderDeltaBadge(delta, r.dec)}</td>
+                    </tr>
+                `;
+            }).join('') + `
+                <tr class="bg-slate-100 font-bold border-t border-slate-200">
+                    <td class="py-2 px-3 sticky-col bg-slate-100">葡萄糖輸注速率 GIR (mg/kg/min)</td>
+                    <td class="py-2 px-3 text-center text-teal-900 border-l border-slate-100">&le; 4.0 - 5.0</td>
+                    <td class="py-2 px-3 border-l border-slate-100">${curr.gir.toFixed(2)}</td>
+                    <td class="py-2 px-3 text-center">${curr.gir > 5 ? '<span class="text-rose-600">⚠️ 超標</span>' : '✓ 正常'}</td>
+                    <td class="py-2 px-3 border-l border-slate-100 text-teal-950">${prop.gir.toFixed(2)}</td>
+                    <td class="py-2 px-3 text-center">${prop.gir > 5 ? '<span class="text-rose-600 font-bold">⚠️ 超標</span>' : '<span class="text-emerald-700">✓ 正常</span>'}</td>
+                    <td class="py-2 px-3 text-center border-l border-slate-200">${(prop.gir - curr.gir).toFixed(2)}</td>
+                </tr>
+            `;
+        }
+
+        function renderGapBadge(gap, th, dec, unit) {
+            if (gap < -th) return `<span class="px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 font-bold text-[10px]">不足 ${gap.toFixed(dec)}</span>`;
+            if (gap > th) return `<span class="px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-bold text-[10px]">過量 +${gap.toFixed(dec)}</span>`;
+            return `<span class="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-[10px]">✓ 達標</span>`;
+        }
+
+        function renderDeltaBadge(delta, dec) {
+            if (Math.abs(delta) < 0.01) return `<span class="text-slate-400 font-mono">-</span>`;
+            const isPos = delta > 0;
+            return `<span class="font-bold ${isPos ? 'text-blue-700' : 'text-rose-700'}">${isPos ? '+' : ''}${delta.toFixed(dec)}</span>`;
+        }
+
+        function renderCompounding(comp) {
+            document.getElementById('comp_total_vol').textContent = comp.totalRawVol.toFixed(1);
+            document.getElementById('comp_water_vol').textContent = comp.waterVol.toFixed(1);
+
+            const banner = document.getElementById('comp_status_banner');
+            const badge = document.getElementById('comp_badge');
+            const summary = document.getElementById('comp_summary');
+
+            if (comp.barriers.length > 0) {
+                banner.className = 'p-3.5 rounded-xl border bg-rose-50/90 border-rose-300 ring-2 ring-rose-200';
+                badge.className = 'inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-black bg-rose-600 text-white shadow-xs';
+                badge.textContent = '❌ 調配阻礙 / 無法進食輸注';
+                summary.textContent = '檢測到致命物理沉澱、破乳或原料體積溢出，禁止開立輸注！';
+
+                const bBox = document.getElementById('comp_barrier_box');
+                bBox.classList.remove('hidden');
+                document.getElementById('comp_barrier_list').innerHTML = comp.barriers.map(b => `<li>${b}</li>`).join('');
+            } else {
+                banner.className = 'p-3.5 rounded-xl border bg-emerald-50 border-emerald-300';
+                badge.className = 'inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-black bg-emerald-600 text-white shadow-xs';
+                badge.textContent = '✓ 原料調配可行';
+                summary.textContent = '原料抽取濃度在安全範圍內，注射用水餘額充足，無沉澱結晶風險。';
+                document.getElementById('comp_barrier_box').classList.add('hidden');
+            }
+
+            const wBox = document.getElementById('comp_warning_box');
+            if (comp.warnings.length > 0) {
+                wBox.classList.remove('hidden');
+                document.getElementById('comp_warning_list').innerHTML = comp.warnings.map(w => `<li>${w}</li>`).join('');
+            } else {
+                wBox.classList.add('hidden');
+            }
+
+            // Gauge meter
+            const pct = Math.min(100, Math.max(0, (comp.totalRawVol / 1000) * 100));
+            const bar = document.getElementById('comp_meter_bar');
+            bar.style.width = pct + '%';
+            bar.className = comp.isOverflow ? 'h-full bg-rose-600 animate-pulse' : 'h-full bg-teal-600';
+            document.getElementById('comp_gauge_text').textContent = `${comp.totalRawVol.toFixed(1)} / 1000 ml (${pct.toFixed(1)}%)`;
+
+            // Ingredients Table
+            document.getElementById('ing_table_body').innerHTML = comp.ingredients.map(ing => `
+                <tr class="${ing.name.includes('Water') ? (comp.isOverflow ? 'bg-rose-100 font-bold text-rose-900' : 'bg-teal-50 font-bold text-teal-900') : 'hover:bg-slate-50'}">
+                    <td class="p-2 font-medium">${ing.name}</td>
+                    <td class="p-2 font-mono text-slate-500">${ing.spec}</td>
+                    <td class="p-2 text-right font-bold tabular-nums">${ing.vol} ml</td>
+                    <td class="p-2 text-slate-500">${ing.note}</td>
+                </tr>
+            `).join('');
+        }
+
+        function toggleIngTable() {
+            const el = document.getElementById('ing_table_wrapper');
+            el.classList.toggle('hidden');
+        }
+
+        function toggleCalcTools() {
+            const el = document.getElementById('calc_tools_block');
+            const isHidden = el.classList.contains('hidden');
+            el.classList.toggle('hidden');
+            document.getElementById('btn_calc_tools_text').textContent = isHidden ? '收合臨床校正公式' : '展開臨床校正公式';
+        }
+
+        function runCalcTools() {
+            const caMeas = parseFloat(document.getElementById('calc_ca_meas').value) || 8;
+            const alb = parseFloat(document.getElementById('calc_alb').value) || 3;
+            const corrCa = caMeas + 0.8 * (4.0 - alb);
+            document.getElementById('res_corr_ca').textContent = corrCa.toFixed(2);
+
+            const naTar = parseFloat(document.getElementById('calc_na_target').value) || 135;
+            const naCurr = parseFloat(document.getElementById('calc_na_curr').value) || 128;
+            const weight = parseFloat(document.getElementById('p_weight').value) || 60;
+            const gender = document.getElementById('p_gender').value;
+            const tbw = weight * (gender === 'male' ? 0.6 : 0.5);
+            const deficit = tbw * (naTar - naCurr);
+            document.getElementById('res_na_deficit').textContent = Math.round(deficit);
+
+            const infusateNa = parseFloat(document.getElementById('calc_infusate_na').textContent) || 0;
+            const deltaNa = (infusateNa - naCurr) / (tbw + 1);
+            document.getElementById('res_na_delta').textContent = deltaNa >= 0 ? `+${deltaNa.toFixed(2)}` : deltaNa.toFixed(2);
+        }
+
+        function renderOrderText(curr, prop, comp) {
+            const weight = parseFloat(document.getElementById('p_weight').value) || 60;
+            const newMainItem = db.main[document.getElementById('new_main_sel').value];
+            const mainName = newMainItem?.name || '新處方';
+            const rate = document.getElementById('new_main_rate').value;
+
+            let addStr = '';
+            newRegimen.additives.forEach(a => {
+                const item = db.add[a.addId];
+                if (item && a.vials > 0) {
+                    addStr += ` + ${item.name} ${a.vials}支`;
+                }
+            });
+
+            let lipidStr = '無另加';
+            const lipidVials = parseFloat(document.getElementById('new_lipid_vials').value) || 0;
+            const lipidItem = db.sub[document.getElementById('new_lipid_sel').value];
+            if (lipidItem && lipidVials > 0) {
+                lipidStr = `${lipidItem.name} ${lipidVials}瓶 IV drip (獨立幫浦慢速 15-20 ml/hr)`;
+            }
+
+            const stamp = comp.barriers.length > 0 
+                ? `[❌ 藥局調配阻礙警示]:\n` + comp.barriers.map(b => `   - ${b}`).join('\n')
+                : `[✓ 藥局調配相容性驗證]: 原料調配可行，注射用水空間 ${comp.waterVol} ml/L，無物理沉澱或破乳阻礙。`;
+
+            const order = [
+                `【TPN 臨床營養處方醫囑開立單】`,
+                `病患體重: ${weight} kg | 目標熱量: ${targets.kcal} kcal/d | 蛋白質: ${targets.protein} g/d`,
+                `1. 主配方醫囑:`,
+                `   ${mainName} ${rate} ml/hr IV drip${addStr}`,
+                `   [滴定建議]: 建議起始流速 30-40 ml/hr，每 12 小時增加 15 ml/hr 達目標 ${rate} ml/hr。`,
+                `2. 脂肪乳劑醫囑:`,
+                `   ${lipidStr}`,
+                `3. 臨床藥師調配與安全核對:`,
+                `   - 葡萄糖輸注速率 GIR: ${prop.gir.toFixed(2)} mg/kg/min (&le; 5.0)`,
+                `   - 預估滲透壓: ${prop.osm} mOsm/L (${prop.osm > 900 ? '必須經中心靜脈 CVC 給藥' : '可經週邊靜脈 PPN 給藥'})`,
+                `   - 非蛋白熱量氮比 (NPC:N): ${prop.npcn}:1`,
+                `4. 藥局調配物理狀態戳記:`,
+                stamp,
+                `※ 請將上方建議於 HIS 醫療資訊系統中覆核後開立。`
+            ].join('\n');
+
+            document.getElementById('order_output_box').textContent = order;
+        }
+
+        function copyOrderText() {
+            const text = document.getElementById('order_output_box').textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.getElementById('btn_copy_order');
+                btn.textContent = '已複製到剪貼簿！';
+                setTimeout(() => btn.textContent = '複製醫囑文字', 2000);
+            });
+        }
+
+        function setMobileView(view) {
+            document.getElementById('col_curr').classList.toggle('hidden', view === 'new');
+            document.getElementById('col_new').classList.toggle('hidden', view === 'curr');
+            document.getElementById('btn_mv_new').className = view === 'new' ? 'py-1.5 px-2 text-xs font-bold rounded-lg bg-teal-600 text-white' : 'py-1.5 px-2 text-xs font-bold rounded-lg bg-slate-100 text-slate-700';
+            document.getElementById('btn_mv_curr').className = view === 'curr' ? 'py-1.5 px-2 text-xs font-bold rounded-lg bg-teal-600 text-white' : 'py-1.5 px-2 text-xs font-bold rounded-lg bg-slate-100 text-slate-700';
+            document.getElementById('btn_mv_both').className = view === 'both' ? 'py-1.5 px-2 text-xs font-bold rounded-lg bg-teal-600 text-white' : 'py-1.5 px-2 text-xs font-bold rounded-lg bg-slate-100 text-slate-700';
+        }
+
+        function scrollToSec(secId) {
+            document.getElementById(secId)?.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // --- 8. CSV 匯出與匯入更新資料庫功能 (含 UTF-8 BOM) ---
+        function openDbModal() { document.getElementById('db_modal').classList.remove('hidden'); document.getElementById('db_modal').classList.add('flex'); }
+        function closeDbModal() { document.getElementById('db_modal').classList.add('hidden'); document.getElementById('db_modal').classList.remove('flex'); }
+
+        const CSV_HEADER = "類別(main/sub/trace/add),藥品代碼(ID),藥品完整名稱,每袋容量ml,每1000ml熱量kcal,每1000ml蛋白質g,每1000ml脂肪g,每1000ml醣類g,每1000ml鈉mEq,每1000ml鉀mEq,每1000ml磷mmol,每1000ml鈣mEq,每1000ml鎂mEq,每1000ml鋅mg,周邊靜脈可用(Y/N)";
+
+        function exportDbToCsv() {
+            const rows = [CSV_HEADER];
+            const addLines = (cat, map) => {
+                Object.entries(map).forEach(([id, item]) => {
+                    if (!id) return;
+                    const line = [
+                        cat, id, `"${item.name.replace(/"/g, '""')}"`, item.vialVol || 1000,
+                        (item.kcal * 1000).toFixed(1), (item.protein * 1000).toFixed(1), (item.lipid * 1000).toFixed(1), (item.cho * 1000).toFixed(1),
+                        (item.na * 1000).toFixed(1), (item.k * 1000).toFixed(1), (item.p * 1000).toFixed(1), (item.ca * 1000).toFixed(1),
+                        (item.mg * 1000).toFixed(1), (item.zn * 1000).toFixed(1), item.isPeripheral ? 'Y' : 'N'
+                    ];
+                    rows.push(line.join(','));
+                });
+            };
+
+            addLines('main', db.main);
+            addLines('sub', db.sub);
+            addLines('trace', db.trace);
+            addLines('add', db.add);
+
+            // Prepend \uFEFF BOM for Excel Chinese compatibility
+            const blob = new Blob(['\uFEFF' + rows.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `TPN_Drug_Database_${new Date().toISOString().slice(0,10)}.csv`;
+            link.click();
+        }
+
+        function downloadSampleCsv() {
+            const sample = [
+                CSV_HEADER,
+                'main,smof_custom,"斯莫夫卡文客製配方 (1477ml)",1477,1083,50.7,38.5,84.6,40.6,30.4,12.8,5.0,10.0,2.6,N',
+                'sub,lipidem_custom,"利皮得 20% 脂肪乳劑 (100ml)",100,2000,0,200,0,0,0,0,0,0,0,Y',
+                'trace,tracutil_custom,"Tracutil 查枯特微量元素",10,0,0,0,0,0,0,0,0,0,10,Y',
+                'add,nacl_custom,"高濃度 NaCl 4 mEq/ml (20ml)",20,0,0,0,0,4000,0,0,0,0,0,Y'
+            ];
+            const blob = new Blob(['\uFEFF' + sample.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `TPN_Drug_Formulary_Template.csv`;
+            link.click();
+        }
+
+        let parsedCsvItems = [];
+        function handleCsvFileSelect(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                let text = evt.target.result;
+                if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+                const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+                if (lines.length < 2) {
+                    alert('CSV 內容為空或無有效資料列！');
+                    return;
+                }
+
+                parsedCsvItems = [];
+                for (let i = 1; i < lines.length; i++) {
+                    const cols = lines[i].split(',').map(c => c.replace(/^"|"$/g, '').trim());
+                    if (cols.length < 3) continue;
+                    const cat = cols[0].toLowerCase();
+                    const id = cols[1];
+                    const name = cols[2];
+                    const vol = parseFloat(cols[3]) || 1000;
+                    const kcal = (parseFloat(cols[4]) || 0) / 1000;
+                    const prot = (parseFloat(cols[5]) || 0) / 1000;
+                    const lipid = (parseFloat(cols[6]) || 0) / 1000;
+                    const cho = (parseFloat(cols[7]) || 0) / 1000;
+                    const na = (parseFloat(cols[8]) || 0) / 1000;
+                    const k = (parseFloat(cols[9]) || 0) / 1000;
+                    const p = (parseFloat(cols[10]) || 0) / 1000;
+                    const ca = (parseFloat(cols[11]) || 0) / 1000;
+                    const mg = (parseFloat(cols[12]) || 0) / 1000;
+                    const zn = (parseFloat(cols[13]) || 0) / 1000;
+                    const isPeri = (cols[14] || '').toUpperCase() === 'Y';
+
+                    parsedCsvItems.push({ cat, id, name, vialVol: vol, kcal, protein: prot, lipid, cho, na, k, p, ca, mg, zn, isPeripheral: isPeri });
+                }
+
+                document.getElementById('csv_preview_text').textContent = `成功解析 CSV，共有 ${parsedCsvItems.length} 項藥品！`;
+                document.getElementById('csv_preview_box').classList.remove('hidden');
+            };
+            reader.readAsText(file);
+        }
+
+        function applyCsvImport() {
+            if (parsedCsvItems.length === 0) return;
+            const mode = document.querySelector('input[name="csv_import_mode"]:checked').value;
+
+            if (mode === 'overwrite') {
+                db = { main: { '': DEFAULT_DB.main[''] }, sub: { '': DEFAULT_DB.sub[''] }, trace: { '': DEFAULT_DB.trace[''] }, add: {} };
+            }
+
+            parsedCsvItems.forEach(item => {
+                const targetMap = (item.cat === 'sub') ? db.sub : (item.cat === 'trace') ? db.trace : (item.cat === 'add') ? db.add : db.main;
+                targetMap[item.id] = item;
+            });
+
+            localStorage.setItem('tpn_standalone_db_v1', JSON.stringify(db));
+            alert(`成功匯入 ${parsedCsvItems.length} 項藥品！`);
+            initSelects();
+            updateAllCalculations();
+            closeDbModal();
+        }
+
+        function restoreDefaultDb() {
+            if (confirm('確定清除自訂藥品資料並恢復至 2018.10.08 標準預設庫嗎？')) {
+                localStorage.removeItem('tpn_standalone_db_v1');
+                db = JSON.parse(JSON.stringify(DEFAULT_DB));
+                initSelects();
+                updateAllCalculations();
+                closeDbModal();
+                alert('已還原為原廠標準配方庫！');
+            }
+        }
+
+        // --- 9. 頁面啟動 ---
+        window.onload = function() {
+            initSelects();
+            calcPatientNeeds();
+        };
+    </script>
+</body>
+</html>

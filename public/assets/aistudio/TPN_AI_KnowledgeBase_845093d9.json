@@ -1,0 +1,329 @@
+{
+  "document_metadata": {
+    "title": "臨床全靜脈營養 (TPN) 處方成分與調配標準資料庫",
+    "base_volume_ml": 1000,
+    "revision_date": "2018-10-08",
+    "source_notes": "整合藥局原料調配明細與2018.10.08修訂版處方總表，包含臨床手寫上限與公式"
+  },
+  "tpn_formulas_per_1000ml": {
+    "Standard": {
+      "總熱量 (Calories) (Kcal)": 1020.0,
+      "胺基酸 (Amino Acid) (%)": 4.25,
+      "葡萄糖 (Dextrose) (%)": 25.0,
+      "鈉 (Sodium, Na) (mEq)": 45.0,
+      "鉀 (Potassium, K) (mEq)": 28.0,
+      "鎂 (Magnesium, Mg) (mEq)": 10.0,
+      "鈣 (Calcium, Ca) (mEq)": 2.0,
+      "磷酸鹽 (Phosphate, P) (mmol)": 13.5,
+      "醋酸鹽 (Acetate) (mEq)": 0.0,
+      "氯 (Chloride, Cl) (mEq)": 53.2,
+      "綜合維他命 (MVI 含 Vit K) (ml)": 2.7,
+      "鋅 (Zinc, Zn) (mg)": 2.8,
+      "微量元素 (Trace Element) (ml)": 0.0,
+      "圖1 原始配方差異備註": "Na:30, Cl:38.2; Acetate:25.5; MVI:2.1",
+      "圖1 胺基酸來源與滲透壓": "Moriamin-SN 10%; 15.2 g N/L",
+      "compounding_ingredients_ml_per_1000ml": {
+        "G/W 50% [0.5 g/ml]": 500.0,
+        "Moriamin-SN 10% [0.1 g/ml]": 425.0,
+        "NaCl [4 mEq/ml]": 7.5,
+        "K Phosphate [K 4.4 mEq/ml, P 3 mmol/ml]": 4.5,
+        "15% KCl [2 mEq/ml]": 4.1,
+        "10% MgSO4 [0.81 mEq/ml]": 12.3,
+        "ZnSO4 [5.94 mg/ml]": 2.1,
+        "Ca gluconate [0.465 mEq/ml]": 4.3,
+        "MVI 1/3 [-]": 2.1,
+        "Water (注射用水) [-]": 38.0
+      }
+    },
+    "Standard (A5D21)": {
+      "總熱量 (Calories) (Kcal)": 914.0,
+      "胺基酸 (Amino Acid) (%)": 5.0,
+      "葡萄糖 (Dextrose) (%)": 21.0,
+      "鈉 (Sodium, Na) (mEq)": 45.0,
+      "鉀 (Potassium, K) (mEq)": 28.0,
+      "鎂 (Magnesium, Mg) (mEq)": 10.0,
+      "鈣 (Calcium, Ca) (mEq)": 2.0,
+      "磷酸鹽 (Phosphate, P) (mmol)": 13.5,
+      "醋酸鹽 (Acetate) (mEq)": 0.0,
+      "氯 (Chloride, Cl) (mEq)": 53.2,
+      "綜合維他命 (MVI 含 Vit K) (ml)": 2.7,
+      "鋅 (Zinc, Zn) (mg)": 2.8,
+      "微量元素 (Trace Element) (ml)": 0.0,
+      "圖1 原始配方差異備註": null,
+      "圖1 胺基酸來源與滲透壓": null
+    },
+    "High Nitrogen": {
+      "總熱量 (Calories) (Kcal)": 801.0,
+      "胺基酸 (Amino Acid) (%)": 6.0,
+      "葡萄糖 (Dextrose) (%)": 16.5,
+      "鈉 (Sodium, Na) (mEq)": 30.0,
+      "鉀 (Potassium, K) (mEq)": 28.0,
+      "鎂 (Magnesium, Mg) (mEq)": 10.0,
+      "鈣 (Calcium, Ca) (mEq)": 2.0,
+      "磷酸鹽 (Phosphate, P) (mmol)": 13.5,
+      "醋酸鹽 (Acetate) (mEq)": 0.0,
+      "氯 (Chloride, Cl) (mEq)": 38.2,
+      "綜合維他命 (MVI 含 Vit K) (ml)": 2.7,
+      "鋅 (Zinc, Zn) (mg)": 2.8,
+      "微量元素 (Trace Element) (ml)": 0.0,
+      "圖1 原始配方差異備註": "Acetate:36; MVI:2.1",
+      "圖1 胺基酸來源與滲透壓": "Moriamin-SN 10%; 15.2 g N/L",
+      "compounding_ingredients_ml_per_1000ml": {
+        "G/W 50% [0.5 g/ml]": 330.0,
+        "Moriamin-SN 10% [0.1 g/ml]": 600.0,
+        "NaCl [4 mEq/ml]": 7.5,
+        "K Phosphate [K 4.4 mEq/ml, P 3 mmol/ml]": 4.5,
+        "15% KCl [2 mEq/ml]": 4.1,
+        "10% MgSO4 [0.81 mEq/ml]": 12.3,
+        "ZnSO4 [5.94 mg/ml]": 2.1,
+        "Ca gluconate [0.465 mEq/ml]": 4.3,
+        "MVI 1/3 [-]": 2.1,
+        "Water (注射用水) [-]": 33.0
+      }
+    },
+    "Pediatric Standard": {
+      "總熱量 (Calories) (Kcal)": 704.0,
+      "胺基酸 (Amino Acid) (%)": 4.0,
+      "葡萄糖 (Dextrose) (%)": 16.0,
+      "鈉 (Sodium, Na) (mEq)": 50.0,
+      "鉀 (Potassium, K) (mEq)": 30.0,
+      "鎂 (Magnesium, Mg) (mEq)": 7.0,
+      "鈣 (Calcium, Ca) (mEq)": 15.0,
+      "磷酸鹽 (Phosphate, P) (mmol)": 7.0,
+      "醋酸鹽 (Acetate) (mEq)": 0.0,
+      "氯 (Chloride, Cl) (mEq)": 70.0,
+      "綜合維他命 (MVI 含 Vit K) (ml)": 1.33,
+      "鋅 (Zinc, Zn) (mg)": 5.0,
+      "微量元素 (Trace Element) (ml)": 0.0,
+      "圖1 原始配方差異備註": "K:30.1, P:6.9; Acetate:24; MVI:2.1",
+      "圖1 胺基酸來源與滲透壓": "Moriamin-SN 10%; 15.2 g N/L",
+      "compounding_ingredients_ml_per_1000ml": {
+        "G/W 50% [0.5 g/ml]": 320.0,
+        "Moriamin-SN 10% [0.1 g/ml]": 400.0,
+        "NaCl [4 mEq/ml]": 12.5,
+        "K Phosphate [K 4.4 mEq/ml, P 3 mmol/ml]": 2.3,
+        "15% KCl [2 mEq/ml]": 10.0,
+        "10% MgSO4 [0.81 mEq/ml]": 8.6,
+        "ZnSO4 [5.94 mg/ml]": 3.7,
+        "Ca gluconate [0.465 mEq/ml]": 32.3,
+        "MVI 1/3 [-]": 2.1,
+        "Water (注射用水) [-]": 208.5
+      }
+    },
+    "Hepatic": {
+      "總熱量 (Calories) (Kcal)": 926.0,
+      "胺基酸 (Amino Acid) (%)": 3.35,
+      "葡萄糖 (Dextrose) (%)": 23.3,
+      "鈉 (Sodium, Na) (mEq)": 30.0,
+      "鉀 (Potassium, K) (mEq)": 28.0,
+      "鎂 (Magnesium, Mg) (mEq)": 10.0,
+      "鈣 (Calcium, Ca) (mEq)": 2.0,
+      "磷酸鹽 (Phosphate, P) (mmol)": 13.5,
+      "醋酸鹽 (Acetate) (mEq)": 0.0,
+      "氯 (Chloride, Cl) (mEq)": 38.2,
+      "綜合維他命 (MVI 含 Vit K) (ml)": 2.7,
+      "鋅 (Zinc, Zn) (mg)": 2.8,
+      "微量元素 (Trace Element) (ml)": 0.0,
+      "圖1 原始配方差異備註": "Kcal:926.5; Na:31.4; MVI:2.1",
+      "圖1 胺基酸來源與滲透壓": "Aminopoly-H 7.15%; 11.3 g N/L",
+      "compounding_ingredients_ml_per_1000ml": {
+        "G/W 50% [0.5 g/ml]": 466.0,
+        "Aminopoly-H 7.15% [0.0715 g/ml]": 470.0,
+        "NaCl [4 mEq/ml]": 7.5,
+        "K Phosphate [K 4.4 mEq/ml, P 3 mmol/ml]": 4.5,
+        "15% KCl [2 mEq/ml]": 4.1,
+        "10% MgSO4 [0.81 mEq/ml]": 12.3,
+        "ZnSO4 [5.94 mg/ml]": 2.1,
+        "Ca gluconate [0.465 mEq/ml]": 4.3,
+        "MVI 1/3 [-]": 2.1,
+        "Water (注射用水) [-]": 27.0
+      }
+    },
+    "Hepatic (A4.5D18.5)": {
+      "總熱量 (Calories) (Kcal)": 809.0,
+      "胺基酸 (Amino Acid) (%)": 4.5,
+      "葡萄糖 (Dextrose) (%)": 18.5,
+      "鈉 (Sodium, Na) (mEq)": 30.0,
+      "鉀 (Potassium, K) (mEq)": 30.0,
+      "鎂 (Magnesium, Mg) (mEq)": 10.0,
+      "鈣 (Calcium, Ca) (mEq)": 2.0,
+      "磷酸鹽 (Phosphate, P) (mmol)": 13.5,
+      "醋酸鹽 (Acetate) (mEq)": 0.0,
+      "氯 (Chloride, Cl) (mEq)": 38.2,
+      "綜合維他命 (MVI 含 Vit K) (ml)": 2.7,
+      "鋅 (Zinc, Zn) (mg)": 2.8,
+      "微量元素 (Trace Element) (ml)": 0.0,
+      "圖1 原始配方差異備註": null,
+      "圖1 胺基酸來源與滲透壓": null
+    },
+    "Renal": {
+      "總熱量 (Calories) (Kcal)": 905.0,
+      "胺基酸 (Amino Acid) (%)": 3.5,
+      "葡萄糖 (Dextrose) (%)": 22.5,
+      "鈉 (Sodium, Na) (mEq)": 18.0,
+      "鉀 (Potassium, K) (mEq)": 0.0,
+      "鎂 (Magnesium, Mg) (mEq)": 0.0,
+      "鈣 (Calcium, Ca) (mEq)": 4.0,
+      "磷酸鹽 (Phosphate, P) (mmol)": 13.5,
+      "醋酸鹽 (Acetate) (mEq)": 0.0,
+      "氯 (Chloride, Cl) (mEq)": 18.0,
+      "綜合維他命 (MVI 含 Vit K) (ml)": 2.7,
+      "鋅 (Zinc, Zn) (mg)": 1.1,
+      "微量元素 (Trace Element) (ml)": 0.0,
+      "圖1 原始配方差異備註": "Cl:0; MVI:2.1",
+      "圖1 胺基酸來源與滲透壓": "Nephrosteril 7%; 10.8 g N/L; 645 Osm/L",
+      "compounding_ingredients_ml_per_1000ml": {
+        "G/W 50% [0.5 g/ml]": 450.0,
+        "Nephrosteril 7% [0.07 g/ml]": 500.0,
+        "Na Phosphate [Na 4 mEq/ml, P 3 mmol/ml]": 4.5,
+        "ZnSO4 [5.94 mg/ml]": 0.84,
+        "Ca gluconate [0.465 mEq/ml]": 8.6,
+        "MVI 1/3 [-]": 2.1,
+        "Water (注射用水) [-]": 34.0
+      }
+    },
+    "Neonate PN": {
+      "總熱量 (Calories) (Kcal)": 440.0,
+      "胺基酸 (Amino Acid) (%)": 2.5,
+      "葡萄糖 (Dextrose) (%)": 10.0,
+      "鈉 (Sodium, Na) (mEq)": 40.0,
+      "鉀 (Potassium, K) (mEq)": 20.0,
+      "鎂 (Magnesium, Mg) (mEq)": 4.0,
+      "鈣 (Calcium, Ca) (mEq)": 30.0,
+      "磷酸鹽 (Phosphate, P) (mmol)": 9.0,
+      "醋酸鹽 (Acetate) (mEq)": 26.0,
+      "氯 (Chloride, Cl) (mEq)": 20.8,
+      "綜合維他命 (MVI 含 Vit K) (ml)": 1.33,
+      "鋅 (Zinc, Zn) (mg)": 2.8,
+      "微量元素 (Trace Element) (ml)": 0.0,
+      "圖1 原始配方差異備註": "K:19.8, Cl:30.6; MVI:2.1",
+      "圖1 胺基酸來源與滲透壓": "Aminosteril Infant 10%; 14.9 g N/L; 885 Osm/L",
+      "compounding_ingredients_ml_per_1000ml": {
+        "G/W 50% [0.5 g/ml]": 200.0,
+        "Aminosteril Infant 10% [0.1 g/ml]": 250.0,
+        "NaCl [4 mEq/ml]": 3.5,
+        "K Phosphate [K 4.4 mEq/ml, P 3 mmol/ml]": 3.0,
+        "15% KCl [2 mEq/ml]": 3.3,
+        "Na Acetate [2 mEq/ml]": 13.0,
+        "10% MgSO4 [0.81 mEq/ml]": 4.9,
+        "ZnSO4 [5.94 mg/ml]": 2.1,
+        "Ca gluconate [0.465 mEq/ml]": 64.5,
+        "MVI 1/3 [-]": 2.1,
+        "Water (注射用水) [-]": 453.5
+      }
+    },
+    "Neonate PN (A3.3)": {
+      "總熱量 (Calories) (Kcal)": 472.0,
+      "胺基酸 (Amino Acid) (%)": 3.3,
+      "葡萄糖 (Dextrose) (%)": 10.0,
+      "鈉 (Sodium, Na) (mEq)": 40.0,
+      "鉀 (Potassium, K) (mEq)": 20.0,
+      "鎂 (Magnesium, Mg) (mEq)": 4.0,
+      "鈣 (Calcium, Ca) (mEq)": 20.0,
+      "磷酸鹽 (Phosphate, P) (mmol)": 9.0,
+      "醋酸鹽 (Acetate) (mEq)": 26.0,
+      "氯 (Chloride, Cl) (mEq)": 20.8,
+      "綜合維他命 (MVI 含 Vit K) (ml)": 1.33,
+      "鋅 (Zinc, Zn) (mg)": 2.8,
+      "微量元素 (Trace Element) (ml)": 0.0,
+      "圖1 原始配方差異備註": null,
+      "圖1 胺基酸來源與滲透壓": null
+    },
+    "Newborn Start": {
+      "總熱量 (Calories) (Kcal)": 370.0,
+      "胺基酸 (Amino Acid) (%)": 3.0,
+      "葡萄糖 (Dextrose) (%)": 5.0,
+      "鈉 (Sodium, Na) (mEq)": 0.0,
+      "鉀 (Potassium, K) (mEq)": 0.0,
+      "鎂 (Magnesium, Mg) (mEq)": 0.0,
+      "鈣 (Calcium, Ca) (mEq)": 40.0,
+      "磷酸鹽 (Phosphate, P) (mmol)": 0.0,
+      "醋酸鹽 (Acetate) (mEq)": 0.0,
+      "氯 (Chloride, Cl) (mEq)": 0.0,
+      "綜合維他命 (MVI 含 Vit K) (ml)": 1.33,
+      "鋅 (Zinc, Zn) (mg)": 2.8,
+      "微量元素 (Trace Element) (ml)": 0.0,
+      "圖1 原始配方差異備註": null,
+      "圖1 胺基酸來源與滲透壓": null
+    },
+    "Peripheral PN": {
+      "總熱量 (Calories) (Kcal)": 440.0,
+      "胺基酸 (Amino Acid) (%)": 2.5,
+      "葡萄糖 (Dextrose) (%)": 10.0,
+      "鈉 (Sodium, Na) (mEq)": 40.0,
+      "鉀 (Potassium, K) (mEq)": 20.0,
+      "鎂 (Magnesium, Mg) (mEq)": 4.0,
+      "鈣 (Calcium, Ca) (mEq)": 6.0,
+      "磷酸鹽 (Phosphate, P) (mmol)": 9.0,
+      "醋酸鹽 (Acetate) (mEq)": 0.0,
+      "氯 (Chloride, Cl) (mEq)": 46.6,
+      "綜合維他命 (MVI 含 Vit K) (ml)": 2.7,
+      "鋅 (Zinc, Zn) (mg)": 2.8,
+      "微量元素 (Trace Element) (ml)": 0.0,
+      "圖1 原始配方差異備註": null,
+      "圖1 胺基酸來源與滲透壓": null
+    }
+  },
+  "clinical_guidelines_and_formulas": [
+    {
+      "category": "電解質濃度上限 (每 1000 ml)",
+      "parameter": "Potassium (K)",
+      "rule_or_note": "Max 80 mEq（輕度低血鉀每日補充約 75 mmol/day；週邊靜脈上限約 40 mEq/L）"
+    },
+    {
+      "category": "電解質濃度上限 (每 1000 ml)",
+      "parameter": "Magnesium (Mg)",
+      "rule_or_note": "Max 15 mEq"
+    },
+    {
+      "category": "電解質濃度上限 (每 1000 ml)",
+      "parameter": "Phosphate (P)",
+      "rule_or_note": "Max 30 mmol（避免與鈣過量併用產生 CaPO4 沉澱）"
+    },
+    {
+      "category": "電解質濃度上限 (每 1000 ml)",
+      "parameter": "Sodium (Na)",
+      "rule_or_note": "依臨床需求調整，週邊靜脈常見上限約 75 mEq"
+    },
+    {
+      "category": "校正公式",
+      "parameter": "校正白蛋白鈣 (Corrected Ca)",
+      "rule_or_note": "Corrected Ca = 0.8 × (4.0 - Alb g/dL) + 血鈣值"
+    },
+    {
+      "category": "校正公式",
+      "parameter": "鈉離子缺損量 (Na deficit)",
+      "rule_or_note": "Na deficit (mmol) = (Na_d - Na_o) × 0.6 × kg"
+    },
+    {
+      "category": "校正公式",
+      "parameter": "輸注後血鈉變化",
+      "rule_or_note": "Change in [Na]_serum = ([Na]_inf - [Na]_serum) ÷ (TBW + 1)，TBW ≈ kg × 0.6"
+    },
+    {
+      "category": "特殊疾病配方特性",
+      "parameter": "Renal 配方 (7%)",
+      "rule_or_note": "EAA : NEAA = 6 : 4，約 250 kcal/bag"
+    },
+    {
+      "category": "特殊疾病配方特性",
+      "parameter": "Hepatic 配方 (8%)",
+      "rule_or_note": "BCAA 含量較高，約 500 kcal/bag；可減緩肝腦病變惡化，但無法預防膽汁鬱積副作用（與 Dextrose 相關，必要時需調降或停用）"
+    },
+    {
+      "category": "微量元素與礦物質",
+      "parameter": "Trace Element / Zn / Cu",
+      "rule_or_note": "Trace Element 僅於處方額外加入時標示；額外補充微量礦物質時可先將 TPN 中的 Zn、Cu 拿掉或避免拮抗"
+    },
+    {
+      "category": "輸注速率與監測",
+      "parameter": "Dextrose 輸注上限",
+      "rule_or_note": "Dextrose 輸注速率 < 0.25 g/kg/hr（避免高血糖與肝脂肪變性）"
+    },
+    {
+      "category": "輸注速率與監測",
+      "parameter": "起始與監測",
+      "rule_or_note": "TPN 起始常由 30 ml/hr 開始逐步調升至 Target（例如 1680 ml / 19 hr ≈ 88 ml/hr）；需定期監測血糖 (QWI / Trace) 與感染徵象"
+    }
+  ]
+}

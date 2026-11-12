@@ -1,0 +1,6 @@
+{
+  "name": "臨床 TPN 處方調整與分析系統",
+  "description": "專業級臨床全靜脈營養 (TPN) 處方計算、配方調整、熱量電解質差距分析與醫囑開立系統，內建 ASPEN 指引、GIR 監測、滲透壓安全檢查及台灣常用配方資料庫。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
